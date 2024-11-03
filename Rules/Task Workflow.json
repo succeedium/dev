@@ -1,0 +1,4 @@
+{
+    "Name": "Task Workflow",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\n#EndRegion\n#['Date Completed'] =s:\n#\tIF( ELLEV('Task', !Task) =0,continue,'');\n\t\n\n['Status'] = S:\n\tIF( ELLEV('Task', !Task) =0,\n\t\tcontinue,\n\t\tIF(['Complete']>0,IF(['Complete'] = ['Active'],'Complete','In Progress'),'Not Started'));\n\n#['Active'] = N: 1;\n['Complete'] = N: IF( DB('Task Workflow',!Task,!organization,'Status') @= 'Complete',1,0);\n\n['Overdue'] = S:\n\tIF( ELLEV('Task', !Task) =0,\n\t\n\tIF( ['days left'] < 1 &\n\tDB('Task Workflow',!Task,!organization,'Status') @<> 'Complete'\n\t ,'Overdue','')\n\t ,'');\n\n['Days Left'] = N:DAYNO(DB('Task Workflow',!Task,!organization,'Due Date'))-DAYNo(TOday);\n\n#['system date'] = N:DAYNo(TOday);\n\n\nFEEDERS;\n['Active'] => ['Complete'];"
+}

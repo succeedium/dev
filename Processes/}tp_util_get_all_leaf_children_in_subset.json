@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_util_get_all_leaf_children_in_subset",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#*** Define global variables\r\nStringGlobalVariable('gEscapedId');\r\n\r\n#*** Call a TI process.\r\nvReturnValue = ExecuteProcess('}tp_util_escape_id',\r\n\t'pExecutionId', pExecutionId, \r\n\t'pNode', pNode, \r\n\t'pControl', 'Y');\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\nvEscapedNode = gEscapedId;\r\n\r\nIf (SubsetExists(pDim, pSubset) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (DTYPE(pDim, pNode) @<> 'C');\r\n    ProcessError;\r\nEndIf;\r\n\r\nIf (SubsetExists(pDim, pNewSubset) <> 0);\r\n\tSubsetDestroy(pDim, pNewSubset);\r\nEndIf;\r\n\r\nvMDX = '{INTERSECT(TM1FILTERBYLEVEL({DESCENDANTS([' | pDim\r\n\t| '].[' | vEscapedNode | ']) }, 0), TM1SUBSETTOSET([' | pDim\r\n\t| '], \"' | pSubset |'\")), ['| pDim | '].[' | vEscapedNode | ']}';\r\n\r\nSubsetCreateByMdx(pNewSubset, vMDX);\r\n\r\n#*** Call a TI process.\r\nvReturnValue = ExecuteProcess('}tp_util_delete_subset_element',\r\n\t'pDim', pDim, \r\n\t'pSubset', pNewSubset, \r\n\t'pNode', pNode);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pNewSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_get_all_leaf_children_in_subset"
+    }
+}

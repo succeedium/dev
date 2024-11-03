@@ -1,0 +1,29 @@
+{
+    "Name": "}tp_admin_application_users",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\t\tpExecutionId, pControl);\r\nEndIf;\r\n\r\n#*** Check everyone group\r\ncEveryoneGroup = cControlPrefix | 'tp_Everyone';\r\nIf (DIMIX('}Groups', cEveryoneGroup) = 0);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube',\r\n\t\t'pGuid', pExecutionId,\r\n\t\t'pProcess', cTM1Process,\r\n\t\t'pErrorCode', 'TI_NODE_NOT_EXIST',\r\n\t\t'pErrorDetails', '}Groups' | ', ' | cEveryoneGroup,\r\n\t\t'pControl', pControl);\r\n\t\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** \r\nvMDX = '{FILTER([}Clients].MEMBERS, [}ClientGroups].[}Groups].[' | cEveryoneGroup | '] = \"\"), [}Clients].[Admin]}';\r\ncNewUsersSubset = 'tp_temp_new_users_' | pExecutionId;\r\n\r\nIf (SubsetExists('}Clients', cNewUsersSubset) > 0);\r\n\tSubsetDestroy('}Clients', cNewUsersSubset);\r\nEndIf;\r\n\r\nSubsetCreateByMdx(cNewUsersSubset, vMDX);\r\n\r\ncNewUsersSubsetSize = SubsetGetSize('}Clients', cNewUsersSubset);\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'New user count: ' | TRIM(STR(cNewUsersSubsetSize, 5, 0)));\r\nEndIf;\r\n\r\ncClientsDimSize = DIMSIZ('}Clients');\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'All user count: ' | TRIM(STR(cClientsDimSize, 5, 0)));\r\nEndIf;\r\n\r\nIf (cClientsDimSize < 2*cNewUsersSubsetSize);\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'Add all users');\r\n\tEndIf;\r\n\t\r\n\tvIndex = 1;\r\n\tWhile (vIndex <= cClientsDimSize);\r\n\t\tvClient = DIMNM('}Clients', vIndex);\r\n\t\t\r\n\t\tAssignClientToGroup(vClient, cEveryoneGroup);\r\n\t\t\r\n\t\tvIndex = vIndex + 1;\r\n\tEnd;\r\n\r\nElse;\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'Only add new users');\r\n\tEndIf;\r\n\r\n\tvRealIndex = 1;\r\n\tvIndex = 1;\r\n\tWhile (vIndex <= cNewUsersSubsetSize);\r\n\t\tvClient = SubsetGetElementName('}Clients', cNewUsersSubset, vRealIndex);\r\n\t\t\r\n\t\tIf (vClient @<> 'Admin');\r\n\t\t\tAssignClientToGroup(vClient, cEveryoneGroup);\r\n\t\tElse;\r\n\t\t\tvRealIndex = vRealIndex + 1;\r\n\t\tEndIf;\r\n\t\t\r\n\t\tvIndex = vIndex + 1;\r\n\tEnd;\r\n\r\nEndIf;\r\n\r\nIf (SubsetExists('}Clients', cNewUsersSubset) > 0);\r\n\tSubsetDestroy('}Clients', cNewUsersSubset);\r\nEndif;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n#SecurityRefresh;\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_admin_application_users"
+    }
+}

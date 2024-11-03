@@ -1,0 +1,16 @@
+{
+    "Name": "Test",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\nAttrPutS( 'Statistiques', 'Account', 'Statistics', 'Caption_Base', 'fr' );\r\n",
+    "MetadataProcedure": "#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n",
+    "DataProcedure": "#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n",
+    "EpilogProcedure": "#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\na=1;\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "Test"
+    }
+}

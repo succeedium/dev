@@ -1,0 +1,23 @@
+{
+    "Name": "}tp_error_cleanup",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#*** get the number of days for expiration from the control cube (attribute)\r\nvConfigDim =cControlPrefix | 'tp_config';\r\nvDaysExpire = AttrN ( vConfigDim, 'TI Message Expiration (Days)', 'NumericValue' );\r\n\r\n#*** get today's date\r\nvToday = TODAY(1);\r\n#get the day number for today\r\nvTodayDay = DAYNO( vToday );\r\n\r\n#*** get all children from the 'All' consolidation in the tp_process_guids dimension\r\nvDim =cControlPrefix | 'tp_process_guids';\r\nvAll = 'All';\r\nvElem = '';\r\nvElem1 = '';\r\n\r\n#*** delete date elements that are expired and all their children elements\r\nvLooper = ELCOMPN ( vDim, vAll );\r\n\r\nWHILE ( vLooper > 0 );\r\n  vElem = ELCOMP ( vDim, vAll, vLooper );\r\n  vElemDay = DAYNO( vElem );\r\n  IF ( vTodayDay - vElemDay >= vDaysExpire );\r\n    vLooper1 = ELCOMPN ( vDim, vElem );\r\n    WHILE ( vLooper1 > 0 );\r\n      vElem1 = ELCOMP ( vDim, vElem, vLooper1 );\r\n      DimensionElementDelete ( vDim, vElem1 );\r\n      vLooper1 = vLooper1 - 1;\r\n    END;\r\n  DimensionElementDelete ( vDim, vElem );\r\n  ENDIF;\r\n  vLooper = vLooper - 1;\r\nEND;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_error_cleanup"
+    }
+}

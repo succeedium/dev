@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_workflow_reject_nodes",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\ncApprovalDim =  ATTRS('}tp_applications', pAppId,  'ApprovalDimension');\r\ncApprovalSubset =ATTRS('}tp_applications', pAppId,  'ApprovalSubset');\r\ncIsActive =ATTRS('}tp_applications', pAppId, 'IsActive');\r\ncShadowApprovalDim =ATTRS('}tp_applications', pAppId, 'ApprovalShadowDimension');\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', cApprovalDim, cApprovalSubset, cIsActive,cShadowApprovalDim );\r\nEndIf;\r\n\r\n\r\nIf (cIsActive @<> 'Y');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_APP_NOT_ACTIVE',\r\n\t\t'pErrorDetails', pAppId,\r\n\t\t'pControl', pControl);\r\n\t\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:', pExecutionId, pTime, pAppId, pNode, pControl);\r\nEndIf;\r\n\r\n#*** Check state cube\r\n\r\ncStateCube = cControlPrefix | 'tp_application_state}' | pAppId;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Check state cube: ' | cStateCube);\r\nEndIf;\r\n\r\nIf(CubeExists(cStateCube) = 0);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_CUBE_NOT_EXIST',\r\n\t\t'pErrorDetails', cStateCube,\r\n\t\t'pControl', pControl);\r\n\r\n\tProcessError;\r\nEndIf;\r\n\r\n#***\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Check node: ' | pNode);\r\nEndIf;\r\n\r\nIf (DIMIX(cShadowApprovalDim, pNode) = 0);\r\nProcessError;\r\nEndIf;\r\n\r\n#*** State constants\r\n\r\ncNotStarted = '0';\r\ncIncomplete = '1';\r\ncWorkInProgress = '2';\r\ncReady = '3';\r\ncLocked = '4';\r\n\r\n#*** Change node state\r\nStringGlobalVariable('gParentInSubset');\r\ncState= 'State';\r\n\r\n#***\r\n#First step: loop all parent nodes and put locked ones into a temp subset \r\n##the user must have Reject permission on each locked parent node\r\n#Second Step:  unlock any locked parents in temp subset,\r\n#Start with the top most parent lower subset index and walk down the tree\r\n#*** Define global variables\r\ncNodeEsc = '';\r\nIf (SCAN(',', pNode) = 0 & SCAN(':', pNode) = 0 & SCAN('''', pNode) = 0);\r\n\tcNodeEsc = pNode;\r\nElse;\r\n\tcNodeLength = LONG(pNode);\r\n\tlooper = 1;\r\n\tWhile (looper <= cNodeLength);\r\n\t\tcIdChar = SUBST(pNode, looper, 1);\r\n\t\tIf (cIdChar @= ',' % cIdChar @= ':' % cIdChar @= '''');\r\n\t\t\tcNodeEsc = cNodeEsc | '_';\r\n\t\tElse;\r\n\t\t\tcNodeEsc = cNodeEsc | cIdChar;\r\n\t\tEndIf;\r\n\t\t\r\n\t\tlooper = looper + 1;\r\n\tEnd;\r\nEndIf;\r\n\r\n#create a temp subset\r\nvTempSubset = 'tp_temp_parents_to_reject_' | cNodeEsc | '_' | pTime;\r\nIF (SubsetExists(cApprovalDim, vTempSubset) >1);\r\n\tSubsetDestroy(cApprovalDim, vTempSubset);\r\nEndif;\r\nSubsetCreate(cApprovalDim, vTempSubset);\r\nSubsetElementInsert(cApprovalDim, vTempSubset, pNode, 1);\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_parent_in_subset', 'pExecutionId', pExecutionId,\r\n\t'pDim', cShadowApprovalDim, 'pSubset', cApprovalSubset, 'pNode', pNode);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\nvNodeParent = gParentInSubset;\r\nWhile (vNodeParent @<> '');\r\n\tvNodeParentState = CellGetS(cStateCube, vNodeParent, cState);\r\n\r\n\t#*** Check user  privilege\r\n\tIf (vNodeParentState @= cLocked);\r\n\t\tStringGlobalVariable('gReject');\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_user_permissions', \r\n\t\t\t'pGuid', pExecutionId, 'pApplication', pAppId, 'pNode',  vNodeParent, 'pUser', TM1User, 'pControl', pControl);\r\n\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\r\n\t\tIf (gReject @= 'F');\r\n\t\t\tIF (SubsetExists(cApprovalDim, vTempSubset)>0);\r\n\t\t\t\tSubsetDestroy(cApprovalDim, vTempSubset);\t\r\n\t\t\tEndif;\r\n\r\n\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t'pErrorCode', 'TI_NO_PERMISSION_DETAILS',\r\n\t\t\t\t'pErrorDetails', 'REJECT' | ', ' |  vNodeParent,\r\n\t\t\t\t'pControl', pControl);\r\n\r\n\t\t\tProcessError;\r\n\r\n\t\tEndIf;\r\n\r\n\t\t#Insert this parent node into a temp subset in approval dimension\r\n\t\t#Always insert into the first position\r\n\t\tSubsetElementInsert(cApprovalDim, vTempSubset, vNodeParent, 1);\r\n\tEndif;\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_parent_in_subset', 'pExecutionId', pExecutionId,\r\n\t\t'pDim', cShadowApprovalDim, 'pSubset', cApprovalSubset, 'pNode',  vNodeParent);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\tvNodeParent = gParentInSubset;\r\nEnd;\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n#***\r\n#Now loop through the temp subset and reject node from top down\r\ntotalRejectNodes = SubsetGetSize(cApprovalDim, vTempSubset);\r\nlooper = 1;\r\nWhile (looper <= totalRejectNodes);\r\n\tvNodeToReject = SubsetGetElementName(cApprovalDim, vTempSubset, looper);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_reject_node', \r\n\t\t'pExecutionId', pExecutionId, 'pTime', pTime, 'pAppId', pAppId, 'pNode',  vNodeToReject,  'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tlooper = looper +1;\r\nEnd;\r\n\r\nIF (SubsetExists(cApprovalDim, vTempSubset)>0);\r\n\tSubsetDestroy(cApprovalDim, vTempSubset);\t\r\nEndif;\r\n\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pTime",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_workflow_reject_nodes"
+    }
+}

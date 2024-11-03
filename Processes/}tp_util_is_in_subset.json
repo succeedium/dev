@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_util_is_in_subset",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t'pProcess', cTM1Process, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndIf;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters: ', pDim, pSubset, pNode, pControl);\r\nEndIf;\r\n\r\n#***\r\n\r\nStringGlobalVariable('gIsInSubset');\r\n\r\nIf (DimensionExists(pDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (SubsetExists(pDim, pSubset) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ngIsInSubset = 'N';\r\n#IF(1)\r\nIf (DIMIX(pDim, pNode) <> 0);\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Node is in dimension', pNode, pDim);\r\n\tEndIf;\r\n\r\n\tcNodePName = DimensionElementPrincipalName(pDim, pNode);\t\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Node name: ' | cNodePName);\r\n\tEndIf;\r\n\r\n\tcSubsetSize = SubsetGetSize(pDim, pSubset);\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Subset size: ' | NumberToString(cSubsetSize));\r\n\tEndIf;\r\n\r\n\t#IF(1.1)\r\n\tIf (cSubsetSize > 1);\r\n\t\r\n\t\t#*** Escape the node to ensure valid MDX\r\n\t\tStringGlobalVariable('gEscapedId');\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_util_escape_id', \r\n\t\t\t'pExecutionId', pExecutionId, 'pNode', cNodePName, 'pControl', pControl);\r\n\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Escaped Node name: ' | gEscapedId);\r\n\t\tEndIf;\t\t\t\t\r\n\r\n\t\tIf (CubeExists(pDim) = 0);\r\n\t\t\tvMDX = 'EXCEPT(TM1SubsetToSet([' | pDim | '], \"' | pSubset | '\"), {[' | pDim | '].[' | gEscapedId | ']})';\r\n\t\tElse;\r\n\t\t\tvMDX = 'EXCEPT(TM1SubsetToSet([' | pDim | '].[' | pDim | '] , \"' | pSubset | '\"), {[' | pDim | '].[' | gEscapedId | ']})';\r\n\t\tEndIf;\r\n\t\t\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'MDX: ', vMDX);\r\n\t\tEndIf;\r\n\r\n\t\tcSubsetLess = 'tp_temp_less_' | pExecutionId;\r\n\t\tSubsetDestroy(pDim, cSubsetLess);\r\n\t\tSubsetCreateByMdx(cSubsetLess, vMDX);\r\n\r\n\t\tIf (cSubsetSize > SubsetGetSize(pDim, cSubsetLess));\r\n\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Node is in subset(0)');\r\n\t\t\tEndIf;\r\n\t\t\tgIsInSubset = 'Y';\r\n\t\tElse;\r\n\t\t\tgIsInSubset = 'N';\r\n\t\tEndIf;\r\n\r\n\t\tSubsetDestroy(pDim, cSubsetLess);\r\n\r\n\t#IF(1.1)\r\n\tElseIf (cSubsetSize = 1);\r\n\r\n\t\tcOnlyMember = SubsetGetElementName(pDim, pSubset, 1);\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Only member: ' | cOnlyMember);\r\n\t\tEndIf;\r\n\t\t\r\n\t\tcOnlyMemberPName = DimensionElementPrincipalName(pDim, cOnlyMember);\r\n\t\tIf (cOnlyMemberPName @= cNodePName);\r\n\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Node is in subset(1)');\r\n\t\t\tEndIf;\r\n\t\t\tgIsInSubset = 'Y';\r\n\t\tElse;\r\n\t\t\tgIsInSubset = 'N';\r\n\t\tEndIf;\r\n\r\n\t#IF(1.1)\r\n\tElse;\r\n\t\tgIsInSubset = 'N';\r\n\tEndIf;\r\n\r\nEndIf;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'gIsInSubset: ' | gIsInSubset);\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_is_in_subset"
+    }
+}

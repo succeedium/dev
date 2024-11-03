@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_delete_sandboxes",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Parameters:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pExecutionId, pAppId, pControl);\r\nEndIf;\r\n\r\n#*** Remove the sandboxes\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Calling ServerSandboxesDelete(name:containing:_' | pAppId | ')');\r\nEndIf;\r\nServerSandboxesDelete('name:containing:_' | pAppId);\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_delete_sandboxes"
+    }
+}

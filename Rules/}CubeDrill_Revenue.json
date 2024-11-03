@@ -1,0 +1,4 @@
+{
+    "Name": "}CubeDrill_Revenue",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\n#EndRegion\n[]=S:'ProductAnalysis';"
+}

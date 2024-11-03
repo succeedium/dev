@@ -1,0 +1,16 @@
+{
+    "Name": "data - Load actuals",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "data - Load actuals"
+    }
+}

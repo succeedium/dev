@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_util_does_dim_have_cube_name",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters: ', pDim, pControl);\r\nEndIf;\r\n\r\n#***\r\n\r\nIf (DimensionExists(pDim) = 0);\r\nProcessError;\r\nEndIf;\r\n\r\nStringGlobalVariable('gDoesDimHaveCubeName');\r\ngDoesDimHaveCubeName = 'N';\r\n\r\nIf (CubeExists(pDim) <> 0);\r\ngDoesDimHaveCubeName = 'Y';\r\nEndIf;\r\n\r\nIf (gDoesDimHaveCubeName @= 'Y');\r\nvFindDim = 'N';\r\ncCube = pDim;\r\nvIndex = 1;\r\nWhile (vIndex > 0);\r\nvCubeDim = TABDIM(cCube, vIndex);\r\n\r\nIf (vCubeDim @= '');\r\nvIndex = -1;\r\nElseIf (vCubeDim @= pDim);\r\nvIndex = -1;\r\nvFindDim = 'Y';\r\nEndIf;\r\n\r\nvIndex = vIndex + 1;\r\nEnd;\r\n\r\nIf (vFindDim @= 'N');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n'pGuid', pExecutionId, \r\n'pProcess', cTM1Process, \r\n'pErrorCode', 'TI_DIM_CUBE_SAME_NAME',\r\n'pErrorDetails', pDim,\r\n'pControl', pControl);\r\n\r\nProcessError;\r\nEndIf;\r\n\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_does_dim_have_cube_name"
+    }
+}

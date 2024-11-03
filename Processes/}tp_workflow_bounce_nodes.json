@@ -1,0 +1,77 @@
+{
+    "Name": "}tp_workflow_bounce_nodes",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\n\r\ncApprovalDim =  ATTRS('}tp_applications', pAppId,  'ApprovalDimension');\r\ncApprovalSubset =ATTRS('}tp_applications', pAppId,  'ApprovalSubset');\r\ncIsActive =ATTRS('}tp_applications', pAppId, 'IsActive');\r\ncShadowApprovalDim =ATTRS('}tp_applications', pAppId, 'ApprovalShadowDimension');\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', cApprovalDim, cApprovalSubset, cIsActive,cShadowApprovalDim );\r\nEndIf;\r\n\r\n#*** Log Parameters\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW,'\\Y \\M \\d - \\h:\\i:\\s'),\r\n\t\t'Parameters:', pExecutionId, pAppId, pOwnerIdToBounce, pOwnershipNodeToBounce, pControl);\r\nEndIf;\r\n\r\n#***\r\n#constants\r\ncLocked = '4';\r\ncWorkInProgress = '2';\r\ncState = 'State';\r\ncStateCube = cControlPrefix | 'tp_application_state}' | pAppId;\r\ncCurrentOwner = 'CurrentOwner';\r\ncCurrentOwnerId = 'CurrentOwnerId';\r\ncTakeOwnershipNode = 'TakeOwnershipNode';\r\ncStateMeasureDim=cControlPrefix | 'tp_node_info';\r\n\r\n#****\r\nStringGlobalVariable('gShowBouncingMessage');\r\nStringGlobalVariable('gBouncingType');\r\ngShowBouncingMessage = 'N';\r\n\r\n#****\r\n\r\n#IF (Bounce 0)\r\nIF (pOwnerIdToBounce @<>'' & pOwnershipNodeToBounce @<> '');\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'Bounce nodes');\r\n\tEndIf;\r\n\r\n\t###bounce leaf nodes in the package\r\n\tIF (DIMIX('}Clients', pOwnerIdToBounce) >0);\r\n\t\tvOwnerToBounce = ATTRS('}Clients', pOwnerIdToBounce, '}TM1_DefaultDisplayValue');\r\n\tElse;\r\n\t\tvOwnerToBounce = pOwnerIdToBounce;\r\n\tEndIf;\r\n\tIf (vOwnerToBounce @= '');\r\n\t\tvOwnerToBounce = pOwnerIdToBounce;\r\n\tEndIf;\r\n\r\n\t# *** escape double quotes characters, if found, in the user it (such as CAM user id)\r\n\r\n\tvarX = vOwnerToBounce;\r\n\tvPos = SCAN('\"', varX );\r\n\tIf (vPos > 1);\r\n\t\ttempID = '';\r\n\t\tWhile (vPos > 1);\t\r\n\t\t\tvar1 = SUBST(varX , 1, vPos -1) ;\r\n\t\t\tvar2 = SUBST(varX , vPos + 1, LONG(varX ) - vPos);\t\r\n\t\t\tvarX  = var2;\r\n\t\t\tvPos = SCAN('\"', varX );\r\n\t\t\tIf (vPos > 1);\r\n\t\t\t\ttempID = tempID | var1 | '\"\"' ;\r\n\t\t\tElse;\r\n\t\t\t\ttempID = tempID | var1 | '\"\"' | varX;\r\n\t\t\tEndIf;\r\n\t\tEnd;\r\n        \t\tvOwnerToBounce = tempID;\r\n    \tEndIf;\r\n\t\r\n\t#*** Escape the node to ensure valid MDX\r\n\tStringGlobalVariable('gEscapedId');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_util_escape_id', \r\n\t\t'pExecutionId', pExecutionId, 'pNode', pSourceNode, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Escaped Node name: ' | gEscapedId);\r\n\tEndIf;\r\n\r\n\tvMdx = '{FILTER(TM1FILTERBYLEVEL( TM1SUBSETTOSET([' | cShadowApprovalDim  | '],\"' | cApprovalSubset | '\"), 0), ';\r\n\tvMdx = vMdx | '[' | cStateCube | '].[' | cStateMeasureDim | '].[CurrentOwner]=\"' | vOwnerToBounce | '\"' ;\r\n\tvMdx = vMdx | 'AND [' | cStateCube | '].[' | cStateMeasureDim | '].[TakeOwnershipNode]=\"' | pOwnershipNodeToBounce | '\" ),';\r\n\tvMdx = vMdx | '[' | cShadowApprovalDim | '].[' | gEscapedId | ']}';\r\n\r\n\tvSubsetNodesToBounce = 'nodesToBounce_by_' | pExecutionId;\r\n\tIF (SubsetExists(cShadowApprovalDim, vSubsetNodesToBounce) <>0);\r\n\t\tSubsetDestroy(cShadowApprovalDim, vSubsetNodesToBounce);\r\n\tENDIF;\r\n\tSubsetCreateByMdx(vSubsetNodesToBounce, vMDX);\r\n\tSubsetElementInsert(cShadowApprovalDim, vSubsetNodesToBounce, pSourceNode, 0);\r\n\r\n\tvBounceSize = SubsetGetSize(cShadowApprovalDim, vSubsetNodesToBounce);\r\n\tvUpdateAncestorState = 'Y';\r\n\tIF (pParentTIUpdateStateCube @= 'T' % pParentTIUpdateStateCube @= 'Y' % vBounceSize >100);\r\n\t\tvUpdateAncestorState = 'N';\r\n\tEndif;\r\n\r\n\tlooperBounce = vBounceSize;\r\n\r\n\tWhile (looperBounce >=1);\r\n\t\tvNodeBounce =  SubsetGetElementName(cShadowApprovalDim, vSubsetNodesToBounce, looperBounce);\r\n\t\t#IF (Bounce1)\r\n\t\t#exclude dummy node\r\n\t\tIF (vNodeBounce @<> pSourceNode);\r\n\r\n\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\tTextOutput(cTM1Log, 'Bounce related nodes');\r\n\t\t\tEndIf;\r\n\r\n\t\t\tvBounceOwnerId = CellGetS(cStateCube, vNodeBounce, cCurrentOwnerId);\r\n\t\t\tvBounceOwnershipNode = CellGetS(cStateCube, vNodeBounce, cTakeOwnershipNode);\r\n\t\t\tvBounceState = CellGetS(cStateCube, vNodeBounce, cState);\r\n\r\n\t\t\t#IF (Bounce2)\r\n\t\t\tIF (vBounceOwnerId @=pOwnerIdToBounce & vBounceOwnershipNode @= pOwnershipNodeToBounce);\r\n\r\n\t\t\t\t#IF (Bounce3)\r\n\t\t\t\tIf ((vBounceState @= '') % (vBounceState @=cWorkInProgress ));\r\n\t\t\t\t\tcBeingEdited = 'BeingEdited';\r\n\t\t\t\t\tcStartEditingDate = 'StartEditingDate';\r\n\t\t\t\t\tcOffline = 'Offline';\r\n\t\t\t\t\tIF (vBounceState @=cWorkInProgress & pCheckBouncingOnly @= 'Y' & (pBouncingMode @= 'ALWAYS' % pBouncingMode @='ACTIVE') );\r\n\t\t\t\t\t\t\t\t\t\t\t\t\r\n\t\t\t\t\t\tIF (gBouncingType @= 'OWN');\r\n\t\t\t\t\t\t\t#bouncing messages for taking ownership action\r\n\t\t\t\t\t\t\tvActiveBounceCode = 'NODE_OWNER_ACTIVE';\r\n\t\t\t\t\t\t\tvInactiveBounceCode = 'NODE_OWNER_INACTIVE';\r\n\t\t\t\t\t\t\r\n\t\t\t\t\t\tElse;\r\n\t\t\t\t\t\t\t#bouncing messages for reject action \r\n\t\t\t\t\t\t\tvActiveBounceCode = 'NODE_BOUNCE_OWNER_ACTIVE';\r\n\t\t\t\t\t\t\tvInactiveBounceCode = 'NODE_BOUNCE_OWNER_INACTIVE';\r\n\t\t\t\t\t\tEndif;\r\n\r\n\t\t\t\t\t\tvEdited = CellGetS(cStateCube, vNodeBounce, cBeingEdited);\r\n\t\t\t\t\t\tIf (vEdited @= 'Y');\r\n\t\t\t\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t\t\t\t'pErrorCode', vActiveBounceCode,\r\n\t\t\t\t\t\t\t'pErrorDetails', pAppId,\r\n\t\t\t\t\t\t\t'pControl', pControl);\r\n\t\t\t\t\t\t\tgShowBouncingMessage = 'Y';\r\n\t\t\t\t\t\t\tlooperBounce= 1;\r\n\t\t\t\t\t\tElseif (pBouncingMode @= 'ALWAYS');\r\n\t\t\t\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t\t\t\t'pErrorCode', vInactiveBounceCode,\r\n\t\t\t\t\t\t\t'pErrorDetails', pAppId,\r\n\t\t\t\t\t\t\t'pControl', pControl);\t\r\n\t\t\t\t\t\t\tgShowBouncingMessage = 'Y';\t\r\n\t\t\t\t\t\t\tlooperBounce= 1;\r\n\t\t\t\t\t\tEndIf;\r\n\t\t\t\t\t\t\r\n\t\t\t\t\tElse;\r\n\r\n\t\t\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\t\t\tTextOutput(cTM1Log, 'clean state fields');\r\n\t\t\t\t\t\tEndIf;\r\n\r\n\t\t\t\t\t\tCellPutS('', cStateCube, vNodeBounce, cCurrentOwner);\r\n\t\t\t\t\t\tCellPutS('', cStateCube, vNodeBounce, cCurrentOwnerId);\r\n\t\t\t\t\t\tCellPutS('', cStateCube, vNodeBounce, cTakeOwnershipNode);\r\n\t\t\t\t\t\t#***\r\n\r\n\t\t\t\t\t\tCellPutS('', cStateCube, vNodeBounce, cBeingEdited);\r\n\t\t\t\t\t\tCellPutS('', cStateCube, vNodeBounce, cStartEditingDate);\r\n\t\t\t\t\t\tCellPutS('', cStateCube, vNodeBounce, cOffline);\r\n\r\n\t\t\t\t\t\t#***\r\n\t\t\t\t\t\t#change state\r\n\t\t\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\t\t\tTextOutput(cTM1Log, 'Change state');\r\n\t\t\t\t\t\tEndIf;\r\n\r\n\t\t\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_change_node_state', 'pExecutionId', pExecutionId,\r\n\t\t\t\t\t\t\t'pTime', pTime, 'pAppId', pAppId, 'pNode', vNodeBounce, 'pPrivilege', 'BOUNCE','pUpdateAncestorState',vUpdateAncestorState,'pControl', pControl);\r\n\t\t\t\t\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\t\t\t\t\tProcessError;\r\n\t\t\t\t\t\tEndIf;\r\n\t\t\t\t\tEndif;\r\n\r\n\t\t\t\t#***\r\n\t\t\t\t#IF (Bounce3)\r\n\t\t\t\tENDIF;\r\n\t\t\t#***\r\n\t\t\t#IF (Bounce2)\r\n\t\t\tENDIF;\r\n\r\n\t\t#IF (Bounce1)\r\n\t\tENDIF;\r\n\r\n\t\tlooperBounce = looperBounce-1;\r\n\tEND;\r\n\r\n\r\n\tIF (pParentTIUpdateStateCube @='N' & vBounceSize >100);\r\n\t\t#We need to call }tp_update_state_cube to update state for all consolidated nodes\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_update_state_cube', 'pGuid', pExecutionId,'pAppId', pAppId, 'pUpdateLeafState', 'N', 'pControl', pControl);\r\n\t\t\t\t\t\t\t\t\r\n\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\r\n\tEndif; \r\n\r\n#IF (Bounce 0)\r\nENDIF;\r\n\r\n#Finally take out DR on consolidation level\r\nIF (pCheckBouncingOnly @= 'N');\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'revoke ownership on consolidation');\r\n\tEndIf;\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_reserve_slice', 'pExecutionId', pExecutionId, \r\n\t\t'pAppId', pAppId, 'pNode', pOwnershipNodeToBounce, 'pApprovalDim', cApprovalDim, 'pReserve', 'N', 'pUser', pOwnerIdToBounce, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\nEndif;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\nIF (SubsetExists(cShadowApprovalDim, vSubsetNodesToBounce ) <>0);\r\nSubsetDestroy(cShadowApprovalDim, vSubsetNodesToBounce );\r\nENDIF;\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pOwnerIdToBounce",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pOwnershipNodeToBounce",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pSourceNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pTime",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pCheckBouncingOnly",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pBouncingMode",
+            "Prompt": "",
+            "Value": "NEVER",
+            "Type": "String"
+        },
+        {
+            "Name": "pParentTIUpdateStateCube",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_workflow_bounce_nodes"
+    }
+}

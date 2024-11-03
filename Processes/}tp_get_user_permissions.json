@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_get_user_permissions",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pGuId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***log start\r\ncurrentTime=NOW;\r\ncurrentDate =TIMST(currentTime,'\\Y \\M \\d - \\h:\\i:\\s');\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Process: ', cTM1Process, ' started at ', currentDate);\r\nEndIf;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Parameters:', pGuid, pApplication, pNode, pUser, pControl);\r\nEndIf;\r\n\r\n## Check if a login user has permissions on Edit, Submit, Reject, View or Annotate\r\nStringGlobalVariable('gEdit');\r\nStringGlobalVariable('gSubmit');\r\nStringGlobalVariable('gReject');\r\nStringGlobalVariable('gView');\r\nStringGlobalVariable('gAnnotate');\r\n\r\ngEdit = 'F';\r\ngSubmit = 'F';\r\ngReject = 'F';\r\ngView = 'F';\r\ngAnnotate = 'F';\r\n\r\nvApplicationDim = cControlPrefix | 'tp_applications';\r\nvApplication = DimensionElementPrincipalName(vApplicationDim, pApplication);\r\nvApprovalDim = AttrS(vApplicationDim, vApplication, 'ApprovalDimension');\r\nvNode = '';\r\nIF (DIMIX(vApprovalDim, pNode) >0);\r\nvNode = DimensionElementPrincipalName( vApprovalDim, pNode );\r\nENDIF;\r\n\r\nvPermissionCube = cControlPrefix | 'tp_application_permission}' | pApplication;\r\n\r\n#***Check permission cube\r\nIF (CubeExists(vPermissionCube) =0);\r\nExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', 'pGuid', pGuid, 'pProcess', cTM1Process,'pStartTime', '', 'pEndTime', currentDate,'pErrorCode', 'TI_CUBE_\r\nNOT_EXIST', 'pStatus', 'ERROR', 'pClientStartTime', '', 'pErrorDetails', vPermissionCube, 'pControl', pControl);\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, vPermissionCube | ' does not exist.');\r\nEndIf;\r\nProcessError;\r\nENDIF;\r\n\r\nvCube = '}CellSecurity_' | vPermissionCube;\r\n#***Check cell level security cube for permission cube\r\nIF (CubeExists(vCube) =0);\r\nExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', 'pGuid', pGuid, 'pProcess', cTM1Process,'pStartTime', '', 'pEndTime', currentDate,'pErrorCode', 'TI_CUBE_\r\nNOT_EXIST', 'pStatus', 'ERROR', 'pClientStartTime', '', 'pErrorDetails', vCube, 'pControl', pControl);\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, vCube | ' does not exist.');\r\nEndIf;\r\nProcessError;\r\nENDIF;\r\n\r\nvUser = pUser;\r\nvPermissionDim = cControlPrefix | 'tp_permissions';\r\nvGroupDim = '}Groups';\r\n\r\nvSubset='user_group_' | pGuid;\r\nif (subsetExists('}Groups', vSubset)<>0);\r\nsubsetdestroy('}Groups', vSubset);\r\nendif;\r\n\r\n#If a mdx return zero item, SubsetsetCreateByMdx will throw an error\r\n#workaround, add SecurityAdmin as a dummy member\r\nvMDX = '{ FILTER ( [}Groups].Members, [}ClientGroups].( [}Clients].[' | vUser | '] ) <> \"\" ), [}Groups].[SecurityAdmin]} ';\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'MDX', vMDX);\r\nEndIf;\r\n\r\nsubsetCreateByMdx(vSubset, vMDX);\r\nSubsetElementInsert('}Groups', vSubset, 'SecurityAdmin', 0);\r\n\r\nlooper =1;\r\nvSubsetSize = SubsetGetSize('}Groups', vSubset);\r\nwhile (looper <= vSubsetSize);\r\nvGroup = SubsetGetElementName ('}Groups', vSubset, looper);\r\nIF (UPPER(vGroup) @= 'ADMIN' % UPPER(vGroup) @= 'DATAADMIN');\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'User has ADMIN or DATAADMIN rights');\r\nEndIf;\r\n\r\ngEdit = 'T';\r\ngSubmit = 'T';\r\ngReject = 'T';\r\ngView = 'T';\r\ngAnnotate = 'T';\r\n\r\nELSE;\r\n\r\nIF (vNode @<> '');\r\n\r\n#VIEW permission\r\nvSecurity = CellGetS(vCube, vNode, 'VIEW', vGroup);\r\nIF (UPPER(vSecurity) @= 'READ');\r\ngView = 'T';\r\nENDIF;\r\n\r\n#EDIT permission\r\nvSecurity = CellGetS(vCube, vNode, 'EDIT', vGroup);\r\nIF (UPPER(vSecurity) @= 'READ');\r\ngEdit = 'T';\r\nENDIF;\r\n\r\n#SUBMIT permission\r\nvSecurity = CellGetS(vCube, vNode, 'SUBMIT', vGroup);\r\nIF (UPPER(vSecurity) @= 'READ');\r\ngSubmit = 'T';\r\nENDIF;\r\n\r\n#REJECT permission\r\nvSecurity = CellGetS(vCube, vNode, 'REJECT', vGroup);\r\nIF (UPPER(vSecurity) @= 'READ');\r\ngReject = 'T';\r\nENDIF;\r\n\r\n#ANNOTATE permission\r\nvSecurity = CellGetS(vCube, vNode, 'ANNOTATE', vGroup);\r\nIF (UPPER(vSecurity) @= 'READ');\r\ngAnnotate = 'T';\r\nENDIF;\r\n\r\nENDIF;\r\n\r\nENDIF;\r\n\r\nlooper = looper+1;\r\nend;\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, gView, gAnnotate, gEdit, gReject, gSubmit);\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n\r\n#*** Log File Name\r\ncTM1Log = cEpilogLog;\r\n\r\nIF (SubsetExists('}Groups', vSubset) =1);\r\nSubsetDestroy('}Groups', vSubset);\r\nENDIF;\r\n\r\n#*** No error\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pGuid",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pApplication",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pUser",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_get_user_permissions"
+    }
+}

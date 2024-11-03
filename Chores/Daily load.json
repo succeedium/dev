@@ -1,0 +1,11 @@
+{
+    "Name": "Daily load",
+    "StartTime": "2023-09-03T19:23Z",
+    "DSTSensitive": true,
+    "Active": false,
+    "ExecutionMode": "SingleCommit",
+    "Frequency": "P1DT00H00M00S",
+    "Attributes": {
+        "Caption": "Daily load"
+    }
+}

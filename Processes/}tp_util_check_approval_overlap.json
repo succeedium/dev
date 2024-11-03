@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_util_check_approval_overlap",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '}';\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\nIF (DIMIX('}tp_applications', pAppId) >0);\r\n\tcApprovalDim =  ATTRS('}tp_applications', pAppId,  'ApprovalDimension');\r\n\tcApprovalSubset =ATTRS('}tp_applications', pAppId,  'ApprovalSubset');\r\nElse;\r\n\tcApprovalDim =  pApprovalDim;\r\n\tcApprovalSubset =pApprovalSubset;\r\nEndif;\r\n\r\ncShadowApprovalDim ='}tp_tasks}' | pAppId;\r\n\r\n#***\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', cApprovalDim, cApprovalSubset, cShadowApprovalDim );\r\nEndIf;\r\n\r\n#***\r\ncApprovalDimToCompare  =  ATTRS('}tp_applications', pAppIdToCompare,  'ApprovalDimension');\r\ncApprovalSubsetToCompare =ATTRS('}tp_applications', pAppIdToCompare,  'ApprovalSubset');\r\ncShadowApprovalDimToCompare  ='}tp_tasks}' | pAppIdToCompare;\r\n\r\n#***\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application_to_compare attributes', cApprovalDimToCompare, \r\n\t\tcApprovalSubsetToCompare, cShadowApprovalDimToCompare );\r\nEndIf;\r\n\r\n#***\r\nisApprovalHierarchyOverlap = 'N';\r\n\r\nIF (cApprovalDim @= cApprovalDimToCompare & cApprovalSubset @=cApprovalSubsetToCompare);\r\n\tisApprovalHierarchyOverlap = 'Y';\r\nElseif (cApprovalDim @= cApprovalDimToCompare & cApprovalSubset @<>cApprovalSubsetToCompare);\r\n\tvSubset = 'approval_overlap' | pExecutionId;\r\n\tIF (SubsetExists(cApprovalDim, vSubset) =1);\r\n\t\tSubsetDestroy(cApprovalDim, vSubset);\r\n\tEndif;\r\n\t\r\n\tvMdx = '{INTERSECT(Tm1SubsetToSet( [' | cApprovalDim | '], \"' | cApprovalSubset | '\" ) , Tm1SubsetToSet( [' | cApprovalDimToCompare | '], \"' | cApprovalSubsetToCompare | '\" ) )}';\r\n\tSubsetCreateByMdx(vSubset, vMdx, cApprovalDim);\r\n\tvTotalOverlap = SubsetGetSize(cApprovalDim, vSubset);\r\n\tIF (vTotalOverlap >0);\r\n\t\tisApprovalHierarchyOverlap = 'Y';\r\n\tEndif;\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, vMdx, NumberToString(vTotalOverlap) );\r\n\tEndIf;\r\nEndif;\r\n\r\nIf (isApprovalHierarchyOverlap @= 'Y');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_APPROVAL_OVERLAPPED',\r\n\t\t'pErrorDetails', pAppId,\r\n\t\t'pControl', 'Y');\r\n\t\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n\r\n#*** Log File Name\r\ncTM1Log = cEpilogLog;\r\n\r\n\r\nIF (SubsetExists(cApprovalDim, vSubset) =1);\r\n\tSubsetDestroy(cApprovalDim, vSubset);\r\nEndif;\r\n\r\n#*** No error\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppIdToCompare",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_check_approval_overlap"
+    }
+}

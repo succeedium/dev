@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_get_log_file_names",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\nStringGlobalVariable('gMetadataLog');\r\n\r\nvLogPrefix = pProcess;\r\nIf (SUBST(vLogPrefix, 1, 1) @= '}');\r\n\tvLogPrefix = SUBST(vLogPrefix, 2, (LONG(vLogPrefix) - 1));\r\nEndIf;\r\n\r\n#*** Check tp_config dimension\r\ncConfigDim = cControlPrefix | 'tp_config';\r\n\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\r\n\tcLogDirectory = ATTRS(cConfigDim, 'Log Directory', 'String Value');\r\n\tIf (cLogDirectory @<> '' & SUBST(cLogDirectory, (LONG(cLogDirectory) - 1), 1) @<> '\\');\r\n\t\tcLogDirectory = cLogDirectory | '\\';\r\n\tEndIf;\r\n\t\r\n\tgPrologLog = cLogDirectory | vLogPrefix | '_' | pExecutionId | '_prolog.log';\r\n\tgEpilogLog = cLogDirectory | vLogPrefix | '_' | pExecutionId | '_epilog.log';\r\n\tgDataLog = cLogDirectory | vLogPrefix | '_' | pExecutionId | '_data.log';\r\n\tgMetadataLog = cLogDirectory | vLogPrefix | '_' | pExecutionId | '_metadata.log';\r\n\r\nElse;\r\n\r\n\tgPrologLog = vLogPrefix | '_' | pExecutionId | '_prolog.log';\r\n\tgEpilogLog = vLogPrefix | '_' | pExecutionId | '_epilog.log';\r\n\tgDataLog = vLogPrefix | '_' | pExecutionId | '_data.log';\r\n\tgMetadataLog = vLogPrefix | '_' | pExecutionId | '_metadata.log';\r\n\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pProcess",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_get_log_file_names"
+    }
+}

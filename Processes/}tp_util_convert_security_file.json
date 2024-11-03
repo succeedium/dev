@@ -1,0 +1,85 @@
+{
+    "Name": "}tp_util_convert_security_file",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n#*** Log File Name\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\nvReturnValue = ExecuteProcess('}tp_get_log_file_names',\r\n'pExecutionId', pExecutionId, 'pProcess', cTM1Process, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\ncConfigDim = '}tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS('}tp_config', 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\t\tpExecutionId, pSourceFile, pDim, pBlob);\r\nEndIf;\r\n\r\n#*** Set local variables\r\nDataSourceType = 'CHARACTERDELIMITED';\r\nDatasourceASCIIDelimiter = CHAR(9);\r\nDatasourceASCIIQuoteCharacter='';\r\nDatasourceASCIIHeaderRecords = 0;\r\nDatasourceNameForServer = pSourceFile;\r\ncBlob = pBlob | '.blb';\r\n\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'DataSourceType: ' | DataSourceType);\r\n\tTextOutput(cTM1Log, 'DatasourceASCIIDelimiter: ' | DatasourceASCIIDelimiter);\r\n\tTextOutput(cTM1Log, 'DatasourceASCIIHeaderRecords: ' | NumberToString(DatasourceASCIIHeaderRecords));\r\n\tTextOutput(cTM1Log, 'DatasourceNameForServer: ' | DatasourceNameForServer);\r\nEndIf;\r\n\r\n#*** Set input file encoding as UTF-8\r\n\r\nSetInputCharacterSet('TM1CS_UTF8');\r\n\r\n#***\r\n\r\nIf (DimensionExists(pDim) = 0);\r\n    If (cGenerateLog @= 'Y');\r\n\t    TextOutput(cTM1Log, 'Dimension does not exist: ' | pDim);\r\n    EndIf;\r\n    \r\n    ProcessError;\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n#*** Log File Name\r\ncTM1Log = cDataLog;\r\n\r\nIf (vNode @<> 'ReviewerEditOn');\r\n\tvPNode = DimensionElementPrincipalName(pDim, vNode);\r\nElse;\r\n\tvPNode = 'ReviewerEditOn';\r\nEndIf;\r\n\r\nSetOutputCharacterSet(cBlob, 'TM1CS_UTF8');\r\nTextOutput(cBlob, vPNode, vGroup, vRight, vViewDepth, vReviewDepth); \r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "ASCII",
+        "asciiDecimalSeparator": ".",
+        "asciiDelimiterChar": ",",
+        "asciiDelimiterType": "Character",
+        "asciiHeaderRecords": 0,
+        "asciiQuoteCharacter": "\"",
+        "asciiThousandSeparator": ",",
+        "dataSourceNameForClient": "dummy.txt",
+        "dataSourceNameForServer": "dummy.txt"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSourceFile",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pBlob",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [
+        {
+            "Name": "vNode",
+            "Type": "String",
+            "Position": 1,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "vGroup",
+            "Type": "String",
+            "Position": 2,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "vRight",
+            "Type": "String",
+            "Position": 3,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "vViewDepth",
+            "Type": "String",
+            "Position": 4,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "vReviewDepth",
+            "Type": "String",
+            "Position": 5,
+            "StartByte": 0,
+            "EndByte": 0
+        }
+    ],
+    "Attributes": {
+        "Caption": "}tp_util_convert_security_file"
+    }
+}

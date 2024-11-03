@@ -1,0 +1,35 @@
+{
+    "Name": "SPACE.email",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n# Get the SPACE host from the config cube\r\nsURL = CellGetS( 'SPACE.cfg', 'Value', 'SPACE.host' ) | '/python/';\r\n\r\n# Use ExecuteHttpRequest in IBM PA V12 or user SPACE.ExecuteHttpRequest in older versions\r\n#ExecuteHttpRequest(\r\n#  'POST',\r\n#  sURL,\r\n#  'd {\"file\": \"email.py\", \"action\":\"RUN\",arguments:[\"'| sEmailTo |'\",\"'| sEmailSubject |'\",\"'| sEmailBody |'\"]}',\r\n#  '-k' );\r\n\r\nExecuteProcess( 'SPACE.ExecuteHttpRequest', \r\n  'sRequestId', TIMST(NOW(), '\\Y\\m\\d\\h\\i\\s'),\r\n  'sUrl', sURL,\r\n  'sMethod', 'POST',\r\n  'sBodyJSON', '{\"file\": \"email.py\", \"action\":\"RUN\",arguments:[\"'| sEmailTo |'\",\"'| sEmailSubject |'\",\"'| sEmailBody |'\"]}'\r\n  );\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "sEmailTo",
+            "Prompt": "",
+            "Value": "space@succeedium.com",
+            "Type": "String"
+        },
+        {
+            "Name": "sEmailSubject",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "sEmailBody",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "SPACE.email"
+    }
+}

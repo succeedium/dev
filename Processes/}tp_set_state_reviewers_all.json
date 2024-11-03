@@ -1,0 +1,29 @@
+{
+    "Name": "}tp_set_state_reviewers_all",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\n\r\n#*** Log File Name\r\ncTM1Process = cControlPrefix | 'tp_set_state_reviewers_all';\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names',\r\n'pExecutionId', pExecutionId, 'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\nProcessError;\r\nEndIf;\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\tpExecutionId, pControl);\r\nEndIf;\r\n\r\n\r\n\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\ncAppAttrDim = '}ElementAttributes_' | cApplicationsDim;\r\n\r\ncAppsDimSize = DIMSIZ(cApplicationsDim);\r\nvIndex = 1;\r\nWhile (vIndex <= cAppsDimSize);\r\n\tcAppId = DIMNM(cApplicationsDim, vIndex);\r\n\tcVersion = ATTRS(cApplicationsDim, cAppId, 'Version');\r\n\tcApproval = ATTRS(cApplicationsDim, cAppId, 'ApprovalDimension');\r\n\tIf (cVersion @= '10.2.2' & cApproval @<> '');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Set reviewers for app:',\r\n\t\t\tcAppId);\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_set_state_reviewers',\r\n\t\t\t'pExecutionId', pExecutionId, 'pAppId', cAppId, 'pControl', pControl);\r\n\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\tEndIf;\r\n\tvIndex = vIndex + 1;\r\nEnd;\r\n\r\n  \r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_set_state_reviewers_all"
+    }
+}

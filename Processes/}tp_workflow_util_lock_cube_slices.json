@@ -1,0 +1,65 @@
+{
+    "Name": "}tp_workflow_util_lock_cube_slices",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '}';\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t'pProcess', cTM1Process, 'pControl', 'Y');\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\ncTaskNavDimensions = '}tp_task_navigation_dims}' | pAppId;\r\ncTaskNavigationCube = '}tp_task_navigations}' | pAppId;\r\n\r\n#***\r\nIF (pControlDim @='');\r\ncVersionDim = ATTRS('}tp_applications', pAppId, 'VersionDimension');\r\nElse;\r\ncVersionDim = pControlDim;\r\nEndif;\r\n\r\nIF (pControlWritableSlices @='');\r\ncVersionSlicesWrite =ATTRS('}tp_applications', pAppId, 'VersionSlicesWrite');\r\nElse;\r\ncVersionSlicesWrite = pControlWritableSlices;\r\nEndif;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', cVersionDim,cVersionSlicesWrite );\r\nEndIf;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:', pExecutionId,  pAppId, pCube, pApprovalDim, pNode, pLock);\r\nEndIf;\r\n\r\n\r\n#***Lock slices\r\n\r\ncOverlayDim = '}SecurityOverlay';\t\t\r\nversionSeparater = '|';\r\nvPosVersion = 0;\r\nvStringToScan = cVersionSlicesWrite;\r\nIF (cVersionSlicesWrite @<> '');\r\n\tvPosVersion = SCAN(versionSeparater, vStringToScan);\r\nElse;\r\n\tvPosVersion = 1;\r\nEndif;\r\n\r\nWhile (vPosVersion >0);\r\n\tvVersionSlice  = SUBST(vStringToScan, 1, vPosVersion-1);\r\n\tvStringToScan = SUBST(vStringToScan, vPosVersion +1, LONG(vStringToScan)-vPosVersion);\r\n\tvPosVersion = SCAN(versionSeparater, vStringToScan);\r\n\tcCubeAddress = '';\r\n\taddConcatSymbol = 0;\r\n\tcOverlayCube = '}SecurityOverlayGlobal_' | pCube;\r\n\r\n\tdimensionIndex = 1;\r\n\tWhile (dimensionIndex > 0 ); \r\n\t\tcCubeDimensionName = TABDIM(cOverlayCube, dimensionIndex);\r\n\t\tIf (cCubeDimensionName @= '');\r\n\t\t\tdimensionIndex = -1;\r\n\t\tElse;\r\n\t\t\tIf (addConcatSymbol > 0);\r\n\t\t\t\tIF (cCubeDimensionName @<> cOverlayDim);\r\n\t\t\t\t\tcCubeAddress = cCubeAddress | '|';\r\n\t\t\t\tEndif;\r\n\r\n\t\t\tElse;\r\n\t\t\t\taddConcatSymbol = 1;\r\n\t\t\tEndIf; \r\n\r\n\t\t\tIF (cCubeDimensionName @=cVersionDim & vVersionSlice @<>'');\r\n\t\t\t\tIF (DIMIX(cVersionDim, vVersionSlice)=0);\r\n\t\t\t\t\tvReturnValue = ExecuteProcess('}tp_error_update_error_cube',\r\n\t\t\t\t\t\t'pGuid', pExecutionId,\r\n\t\t\t\t\t\t'pProcess', cTM1Process,\r\n\t\t\t\t\t\t'pErrorCode', 'TI_WRITABLE_SLICE_NOT_EXISTS',\r\n\t\t\t\t\t\t'pErrorDetails', cVersionDim  | '.' | vVersionSlice | ', ' |  pAppId,\r\n\t\t\t\t\t\t'pControl', 'Y');\r\n\t\r\n\t\t\t\t\tProcessError;\r\n\t\t\t\tEndif;\r\n\t\t\t\tcCubeAddress = cCubeAddress | vVersionSlice; \r\n\t\t\tEndif;\r\n\r\n\t\t\tvTotalNavDimensions = DIMSIZ(cTaskNavDimensions);\r\n\t\t\tvNavLooper = 1;\r\n\t\t\tWhile (vNavLooper <= vTotalNavDimensions);\r\n\t\t\t\tvNavDimension = DIMNM(cTaskNavDimensions, vNavLooper);\r\n\t\t\t\tIF (cCubeDimensionName @= vNavDimension);\r\n\t\t\t\t\tvNavElem = CellGetS(cTaskNavigationCube, pNode, vNavDimension, 'NavigationElement');\r\n\t\t\t\t\tIF (vNavElem @<>'');\r\n\t\t\t\t\t\tcCubeAddress = cCubeAddress | vNavElem;\r\n\t\t\t\t\tEndif;\r\n\t\t\t\tEndif;\r\n\r\n\t\t\t\tvNavLooper = vNavLooper +1;\r\n\t\t\tEnd;\r\n\r\n\t\t\t#IF (cCubeDimensionName @= pApprovalDim & pNode @<> '');\r\n\t\t\t#\tcCubeAddress = cCubeAddress | pNode;\r\n\t\t\t#Endif;\r\n\t\tEndIf;\r\n\t\t\t\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tcLogCubeText = 'Lock address = ' | cCubeAddress;\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), cLogCubeText);\r\n\t\tEndIf;\r\n\r\n\t\tdimensionIndex = dimensionIndex + 1;\r\n\tEnd;\r\n\r\n\tIF (CubeExists(cOverlayCube)>0);\r\n\t\tIF (pLock @= 'Y');\r\n\t\t\tSecurityOverlayGlobalLockNode(1,pCube,cCubeAddress);\r\n\t\tElse;\r\n\t\t\tSecurityOverlayGlobalLockNode(0,pCube,cCubeAddress);\r\n\t\tEndif;\r\n\t\t\t\r\n\tEndif;\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tcLogCubeText = 'lock cube: ' | pCube | ' on address: ' | cCubeAddress;\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), cLogCubeText);\r\n\tEndIf;\r\nend;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pCube",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalDim",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pLock",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        },
+        {
+            "Name": "pControlDim",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pControlWritableSlices",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_workflow_util_lock_cube_slices"
+    }
+}

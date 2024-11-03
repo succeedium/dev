@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_get_user_root_permissions",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2014\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n### This utility process is used by central applications. \r\n### Approval applications can also use it to get the OFFLINE permission.\r\n\r\n## Check if the user has permissions on EDIT, OWN, OFFLINE.\r\nStringGlobalVariable('gEdit');\r\nStringGlobalVariable('gOwn');\r\nStringGlobalVariable('gOffline');\r\n\r\ngEdit = 'F';\r\ngOwn = 'F';\r\ngOffline = 'F';\r\n\r\ncApplicationDim = '}tp_applications';\r\nIf (DIMIX(cApplicationDim, pAppId) = 0);\r\n    ProcessError;\r\nEndIf;\r\n\r\ncApplicationElementSecurityCube = '}ElementSecurity_' | cApplicationDim;\r\nIf (CubeExists(cApplicationElementSecurityCube) = 0);\r\n    ProcessError;\r\nEndIf;\r\n\r\ncRootPermissionsCube = '}tp_application_root_permissions';\r\ncRootPermissionsCellSecurityCube = '}CellSecurity_' | cRootPermissionsCube;\r\nIf (CubeExists(cRootPermissionsCellSecurityCube) = 0);\r\n    ProcessError;\r\nEndIf;\r\n\r\nIf (DIMIX('}Clients', pUser) > 0);\r\n\tpUser = DimensionElementPrincipalName('}Clients', pUser);\r\nElse;\r\n\tProcessError;\r\nEndIf;\r\n\r\nvSubset='user_group_' | pGuid;\r\nIf (subsetExists('}Groups', vSubset)<>0);\r\n\tSubsetDestroy('}Groups', vSubset);\r\nEndIf;\r\n\r\n# If a mdx return zero item, SubsetsetCreateByMdx will throw an error\r\n# workaround, add SecurityAdmin as a dummy member\r\nvMDX = '{FILTER ([}Groups].Members, [}ClientGroups].( [}Clients].[' | pUser | ']) <> \"\" ), [}Groups].[SecurityAdmin]}';\r\nsubsetCreateByMdx(vSubset, vMDX);\r\nSubsetElementInsert('}Groups', vSubset, 'SecurityAdmin', 0);\r\n\r\nlooper = 1;\r\nvSubsetSize = SubsetGetSize('}Groups', vSubset);\r\nWhile (looper <= vSubsetSize);\r\n\tvGroup = SubsetGetElementName ('}Groups', vSubset, looper);\r\n\tIf (UPPER(vGroup) @= 'ADMIN' % UPPER(vGroup) @= 'DATAADMIN');\r\n\t\tgEdit = 'T';\r\n\t\tgOwn = 'T';\r\n\t\tgOffline = 'T';\r\n\tElse;\r\n\t\t#EDIT permission\r\n\t\tvSecurity = CellGetS(cApplicationElementSecurityCube, pAppId, vGroup);\r\n\t\tIf (vSecurity @= 'READ');\r\n\t\t\tgEdit = 'T';\r\n\t\tEndIf;\r\n\r\n\t\t#OWN permission\r\n\t\tvSecurity = CellGetS(cRootPermissionsCellSecurityCube, pAppId, 'OWN', vGroup);\r\n\t\tIf (vSecurity @= 'READ');\r\n\t\t\tgOwn = 'T';\r\n\t\tEndIf;\r\n\t\t\r\n\t\t#OFFLINE permission\r\n\t\tvSecurity = CellGetS(cRootPermissionsCellSecurityCube, pAppId, 'OFFLINE', vGroup);\r\n\t\tIf (vSecurity @= 'READ');\r\n\t\t\tgOffline = 'T';\r\n\t\tEndIf;\r\n\tEndIf;\r\n\t\r\n\tlooper = looper + 1;\r\nEnd;\r\n\r\nIf (SubsetExists('}Groups', vSubset) = 1);\r\n\tSubsetDestroy('}Groups', vSubset);\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pGuid",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pUser",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_get_user_root_permissions"
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_deploy_app_cubes_add",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '}';\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\ncCubePropertiesCube = '}CubeProperties';\r\ncCentralApplicationStateCube = cControlPrefix | 'tp_central_application_state';\r\ncApplicationStateCube = cControlPrefix | 'tp_application_state}'|pAppId;\r\ncApprovalDIM = ATTRS(cControlPrefix | 'tp_applications', pAppId, 'ApprovalDimension');\r\ncApprovalSubset = ATTRS(cControlPrefix | 'tp_applications', pAppId, 'ApprovalSubset');\r\ncAppActive = ATTRS(cControlPrefix | 'tp_applications', pAppId, 'IsActive'); \r\ncVersionDim = ATTRS('}tp_applications', pAppId, 'VersionDimension');\r\ncVersionSlicesWrite =ATTRS('}tp_applications', pAppId, 'VersionSlicesWrite');\r\ncVersionSlicesRead =ATTRS('}tp_applications', pAppId, 'VersionSlicesRead');\r\n\r\ncDataReservationType = '';\r\nIf (cAppActive @= 'Y');\r\n\tcDataReservationType = 'REQUIREDSHARED';\r\n\tIf (cApprovalDIM @= '');\r\n\t\tcDataReservationType = 'ALLOWED';\r\n\tEndIf;\r\nEndIf;\r\n\r\n#***\r\nvCubeName = pCubeName;\r\nvCurrentDRMode = CellGetS( cCubePropertiesCube, vCubeName, 'DATARESERVATIONMODE');\r\n\t\t\r\nIF (cDataReservationType @<> '');\r\n\t# set DR mode when it has a valide mode type, otherwise do not overide other application's valid DR mode\r\n\tCellPutS(cDataReservationType, cCubePropertiesCube, vCubeName, 'DATARESERVATIONMODE');\r\nEndif;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Data Reservation is now ' | cDataReservationType | ' on cube ' | vCubeName);\r\nEndIf;\r\n\r\n#***\r\n#Add data reservations, update security overlay and RD cell security cube if this is a new cube\r\nIf (cApprovalDIM @= '');\r\n\t# If the Central app has an existing owner make sure any new cubes get a data reservation.\r\n\tcState = CellGetS(cCentralApplicationStateCube, pAppId, 'State');\r\n\tIf (cState @= '2');\r\n\t\tcCurrentOwner = CellGetS(cCentralApplicationStateCube, pAppId, 'CurrentOwnerId');\r\n\t\tIf (cCurrentOwner @<> '');\r\n\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_util_reserve_cube_slices', 'pExecutionId', pExecutionId, \r\n\t\t\t\t'pAppId', pAppId, 'pCube', vCubeName, 'pApprovalDim', '', 'pNode', '',  'pReserve', 'Y', 'pUser', cCurrentOwner, 'pControlDim','','pControlWritableSlices', '');\r\n\r\n\t\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\t\tProcessError;\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\tEndIf;\r\nElse;\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Check for existing ownership for cube ' | vCubeName);\r\n\tEndIf;\r\n\r\n\t# If there are any existing node owners make sure any new cubes get a data reservation. \r\n\t#Also we need to update the newly created security overlay cube\r\n\t#We need to update the newly created Reduced Dimensionality cell security cube based on planning rights\r\n\tIf (CubeExists(cApplicationStateCube) = 1);\r\n\t\tcApprovalSubsetSize = SubsetGetSize(cApprovalDim,cApprovalSubset );\r\n\t\tvIndex = 1;\r\n\t\tWhile (vIndex <= cApprovalSubsetSize);\r\n\t\t\tvApprovalNode = SubsetGetElementName(cApprovalDIM, cApprovalSubset, vIndex);\r\n\t\t\tcState = CellGetS(cApplicationStateCube, vApprovalNode, 'State');\r\n\t\t\tIf (cState @= '4');\r\n\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_util_lock_cube_slices', 'pExecutionId', pExecutionId, \r\n\t\t\t\t\t'pAppId', pAppId, 'pCube', vCubeName, 'pApprovalDim', cApprovalDIM, 'pNode', vApprovalNode, 'pLock', 'Y','pControlDim','','pControlWritableSlices', '');\r\n\t\t\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\t\t\tProcessError;\r\n\t\t\t\tEndIf;\r\n\t\t\tEndif;\r\n\r\n\t\t\tIf (DTYPE(cApprovalDIM, vApprovalNode) @<> 'C');\r\n\r\n\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Node state for node ' | vApprovalNode | ' in cube ' | vCubeName | ' is ' | cState);\r\n\t\t\t\tEndIf;\r\n\r\n\t\t\t\tIf (cState @= '2');\r\n\t\t\t\t\tcCurrentOwner = CellGetS(cApplicationStateCube, vApprovalNode, 'CurrentOwnerId');\r\n\t\t\t\t\tcOwnershipNode = CellGetS(cApplicationStateCube, vApprovalNode, 'TakeOwnershipNode');\r\n\t\t\t\t\tIf (cCurrentOwner @<> '' & cOwnershipNode @<> '');\r\n\t\t\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_util_reserve_cube_slices', 'pExecutionId', pExecutionId, \r\n\t\t\t\t\t\t\t'pAppId', pAppId, 'pCube', vCubeName, 'pApprovalDim', cApprovalDIM, 'pNode', cOwnershipNode, 'pReserve', 'Y', 'pUser', cCurrentOwner,'pControlDim','','pControlWritableSlices', '');\r\n\t\t\t\t\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\t\t\t\t\tProcessError;\r\n\t\t\t\t\t\tEndIf;\r\n\t\t\t\t\tEndIf;\r\n\t\t\t\tEndif;\r\n\t\t\tEndIf;\r\n\r\n\t\t\tvIndex = vIndex + 1;\r\n\t\tEnd;\r\n\tEndIf;\r\nEndIf;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pCubeName",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_deploy_app_cubes_add"
+    }
+}

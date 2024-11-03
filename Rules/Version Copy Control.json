@@ -1,0 +1,4 @@
+{
+    "Name": "Version Copy Control",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\n#EndRegion"
+}

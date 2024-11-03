@@ -1,0 +1,11 @@
+{
+    "Name": "test",
+    "StartTime": "2023-12-21T23:07Z",
+    "DSTSensitive": true,
+    "Active": false,
+    "ExecutionMode": "SingleCommit",
+    "Frequency": "P1DT00H00M00S",
+    "Attributes": {
+        "Caption": "test"
+    }
+}

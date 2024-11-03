@@ -1,0 +1,4 @@
+{
+    "Name": "}StatsByClient",
+    "Rules": "skipcheck;\n['Bytes/Message']=['Message Bytes']/['Message Count'];\nfeeders;\n['Message Bytes']=>['Bytes/Message'];"
+}

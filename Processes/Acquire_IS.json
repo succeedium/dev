@@ -1,0 +1,16 @@
+{
+    "Name": "Acquire_IS",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\n# comment\r\nCubeDataReservationAcquire('Income Statement', TM1User(), 0, '|||||') ;",
+    "MetadataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "DataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "EpilogProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "Acquire_IS"
+    }
+}

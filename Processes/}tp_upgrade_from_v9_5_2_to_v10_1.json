@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_upgrade_from_v9_5_2_to_v10_1",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n##################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***Get approval dimension, approval subset and isActive\r\n\r\nStringGlobalVariable('gApprovalDim');\r\nStringGlobalVariable('gApprovalSubset');\r\nStringGlobalVariable('gIsActive');\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_application_attributes', 'pExecutionId', pExecutionId,\r\n\t'pAppId', pAppId, 'pControl',  pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', gApprovalDim, gApprovalSubset, gIsActive);\r\nEndIf;\r\n\r\n#***Insert CubeView \r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\ncAppAttrDim = '}ElementAttributes_' | cApplicationsDim;\r\ncCubeViewsAttr = 'CubeViews';\r\nIf (DimensionExists(cApplicationsDim) > 0);\r\n\r\n\tIf (DIMIX(cAppAttrDim, cCubeViewsAttr) = 0);\r\n\t\tAttrInsert(cApplicationsDim, '', cCubeViewsAttr, 'S');\r\n\tEndIf;\r\nEndIf;\r\n\r\n\r\n#***get \"everyone\" group\r\n\r\ncSystemConfigDim = cControlPrefix | 'tp_system_config';\r\nIf (DimensionExists(cSystemConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncSecurityModeNode = 'IntegratedSecurityMode';\r\ncConfigValueAttr = 'ConfigValue';\r\nvSecurityMode = ATTRS(cSystemConfigDim, cSecurityModeNode, cConfigValueAttr);\r\n\r\ncCognosEveryoneGroup = 'CAMID(\"::Everyone\")';\r\ncTpEveryoneGroup = cControlPrefix | 'tp_Everyone';\r\nIf (vSecurityMode @= '5');\r\n\r\n\tIf (DIMIX('}Groups', cCognosEveryoneGroup) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tcEveryoneGroup = cCognosEveryoneGroup;\r\n\r\nElse;\r\n\r\n\tcEveryoneGroup = cTpEveryoneGroup;\r\n\r\n\tIf (DIMIX('}Groups', cEveryoneGroup) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\nEndIf;\r\n\r\n#Grant DataReservation capabilities to the tp_everyone group\r\ncCapabilityCube = '}Capabilities';\r\nCellPutS('Grant', cCapabilityCube, 'ManageDataReservation', 'EXECUTE', cEveryoneGroup);\r\nCellPutS('Grant', cCapabilityCube, 'DataReservationOverride', 'EXECUTE', cEveryoneGroup);\r\n\r\n\r\n#***Set security\r\nsProcessSecurityCube = '}ProcessSecurity';\r\ncExecuteActionProc = cControlPrefix | 'tp_workflow_execute_action';\r\ncBounceConflictUsersProc = cControlPrefix | 'tp_workflow_bounce_conflict_users';\r\n\r\nCellPutS('Read', sProcessSecurityCube, cExecuteActionProc, cEveryoneGroup);\r\nCellPutS('Read', sProcessSecurityCube, cBounceConflictUsersProc, cEveryoneGroup);\r\n\r\n#*** create applicationCubes cube\r\n\r\ncApplicationCubesCube = cControlPrefix | 'tp_application_cubes';\r\n\r\nsCubesDim = '}Cubes';\r\n\r\nIf (CubeExists(cApplicationCubesCube) = 0);\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'Create application cubes cube');\r\n\tEndIf;\r\n\r\n\tCubeCreate(cApplicationCubesCube, cApplicationsDim, sCubesDim);\r\n\tCubeSetLogChanges(cApplicationCubesCube, 1);\r\n\r\nEndIf;\r\n\r\n#***\r\n# Remove owner groups, do it first so that there are less rows to scan when upgrading security\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_clean_owner_groups', 'pExecutionId', pExecutionId, 'pApprovalDim', gApprovalDim);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_upgrade_security_pre_from_v9_5_2_to_v10_1', 'pExecutionId', pExecutionId,\r\n\t'pAppId', pAppId, 'pApprovalDim', gApprovalDim, 'pApprovalSubset', gApprovalSubset);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\ncNodeInfoDim = cControlPrefix | 'tp_node_info';\r\ncAnnotationChangeUser = 'AnnotationChangeUser';\r\ncAnnotationChangeDate = 'AnnotationChangeDate';\r\n\r\nIf (DIMIX(cNodeInfoDim, cAnnotationChangeUser) <> 0);\r\n\tDimensionElementDelete(cNodeInfoDim, cAnnotationChangeUser);\r\nEndIf;\r\n\r\nIf (DIMIX(cNodeInfoDim, cAnnotationChangeDate) <> 0);\r\n\tDimensionElementDelete(cNodeInfoDim, cAnnotationChangeDate);\r\nEndIf;\r\n\r\n#***\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n##################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n### Set value to version attribute\r\nIf (DIMIX(cApplicationsDim, pAppId) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncVersionAttr = 'Version';\r\nAttrPutS(pVersion, cApplicationsDim, pAppId, cVersionAttr);\r\n\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pVersion",
+            "Prompt": "",
+            "Value": "10.1",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_upgrade_from_v9_5_2_to_v10_1"
+    }
+}

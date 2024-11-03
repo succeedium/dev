@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_get_application_attributes",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** declare global variables\r\nStringGlobalVariable('gApprovalDim');\r\nStringGlobalVariable('gApprovalSubset');\r\nStringGlobalVariable('gIsActive');\r\nStringGlobalVariable('gStoreId');\r\nStringGlobalVariable('gSecuritySet');\r\nStringGlobalVariable('gVersionDimension');\r\nStringGlobalVariable('gApprovalSubsetComplementMdx');\r\n\r\n#* Check application\r\n\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\nIf (DIMIX(cApplicationsDim, pAppId) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Get Application attributes\r\n\r\ncApprovalDimensionAttr = 'ApprovalDimension';\r\ncApprovalSubsetAttr = 'ApprovalSubset';\r\ncApprovalShadowDimAttr = 'ApprovalShadowDimension';\r\ncIsActiveAttr = 'IsActive';\r\ncStoreIdAttr = 'StoreId';\r\ncSecuritySetAttr = 'SecuritySet';\r\ncVersionAttr = 'Version';\r\ncCubeViewsAttr = 'CubeViews';\r\ncMaintenanceAttr = 'IsRunningMaintenance';\r\ncVersionSlicesWrite = 'VersionSlicesWrite';\r\ncVersionSlicesRead = 'VersionSlicesRead';\r\ncVersionDimension = 'VersionDimension';\r\ncApplicationType = 'ApplicationType';\r\n\r\ngIsActive = ATTRS(cApplicationsDim, pAppId, cIsActiveAttr);\r\ngStoreId = ATTRS(cApplicationsDim, pAppId, cStoreIdAttr);\r\ngSecuritySet = ATTRS(cApplicationsDim, pAppId, cSecuritySetAttr);\r\ngApprovalDim = ATTRS(cApplicationsDim, pAppId, cApprovalDimensionAttr);\r\ngApprovalSubset = ATTRS(cApplicationsDim, pAppId, cApprovalSubsetAttr);\r\ngVersionDimension = ATTRS(cApplicationsDim, pAppId, cVersionDimension);\r\n\r\n#* Check approval dimension\r\nIf (gApprovalDim @= '');\r\n\t\tgApprovalSubset = '';\r\n\t\tgApprovalSubsetComplementMdx = '';\r\nElse;\r\n\r\n\tIf (gApprovalSubset @= '');\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tIf (DimensionExists(gApprovalDim) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\t#* Check approval subset\r\n\t\r\n\tIf (SubsetExists(gApprovalDim, gApprovalSubset) <> 0);\r\n\r\n\t\tcApprovalSubsetSize = SubsetGetSize(gApprovalDim, gApprovalSubset);\r\n\r\n\t\t#* Subset Complement\r\n\t\tgApprovalSubsetComplementMdx = '';\r\n\t\tIf (DIMSIZ(gApprovalDim) > cApprovalSubsetSize);\r\n\t\t\tIf (cApprovalSubsetSize = 0);\r\n\t\t\t\tProcessError;\r\n\t\t\tElseIf (cApprovalSubsetSize = 1);\r\n\t\t\t\tvNode = SubsetGetElementName(gApprovalDim, gApprovalSubset, 1);\r\n\t\t\t\tvMDX = 'EXCEPT([' | gApprovalDim | '].MEMBERS, {[' | gApprovalDim | '].[' | vNode | ']})';\r\n\t\t\t\tgApprovalSubsetComplementMdx = vMDX;\r\n\t\t\tElse;\r\n\t\t\t\tIf (CubeExists(gApprovalDim) = 0);\r\n\t\t\t\t\tvMDX = 'EXCEPT([' | gApprovalDim | '].MEMBERS, TM1SubsetToSet([' | gApprovalDim | '], \"' | gApprovalSubset | '\"))';\r\n\t\t\t\tElse;\r\n\t\t\t\t\tvMDX = 'EXCEPT([' | gApprovalDim | '].MEMBERS, TM1SubsetToSet([' | gApprovalDim | '].[' | gApprovalDim | '], \"' | gApprovalSubset | '\"))';\r\n\t\t\t\tEndIf;\r\n\t\t\t\tgApprovalSubsetComplementMdx = vMDX;\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\tElse;\r\n\t\tgApprovalSubset = '';\r\n\t\tgApprovalSubsetComplementMdx = '';\r\n\tEndIf;\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_get_application_attributes"
+    }
+}

@@ -1,0 +1,4 @@
+{
+    "Name": "ExternalFactors",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\n#EndRegion\n['A','Predictive'] = [ 'A','Actual'];\n['Y1','Predictive',{'B','C','D'}] = ['Y1','Actual'];\n['Y2','Predictive',{'B','C','D'}] = IF(ATTRN('Month', !Month, 'Number')<ATTRN('Month', ATTRS('Version',!Version,'FcstMonth'), 'Number'),DB('ExternalFactors', !Year, !Month, 'Actual', !ExternalFactors),STET);\n['A','Predictivev2'] = [ 'A','Actual'];\n['Y1','Predictivev2',{'B','C','D'}] = ['Y1','Actual'];\n['Y2','Predictivev2',{'B','C','D'}] = IF(ATTRN('Month', !Month, 'Number')<ATTRN('Month', ATTRS('Version',!Version,'FcstMonth'), 'Number'),DB('ExternalFactors', !Year, !Month, 'Actual', !ExternalFactors),STET);\n['Y1','ActFor'] = S:'A';\n['Y2','ActFor'] = S: IF(ATTRN('Month', !Month, 'Number')<ATTRN('Month', ATTRS('Version',!Version,'FcstMonth'), 'Number'),'A','F');\n['Y3','ActFor']= S:'F';\n\n"
+}

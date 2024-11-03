@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_rights_update_RDCLS_post",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n#*** Log File Name\r\ncConfigDim = '}tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess('}tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',pExecutionId, pAppId);\r\nEndIf;\r\n\r\n#***\r\ncIMApplicationDim = '}tp_intermediate_security_applications';\r\ncIMMeasures = '}tp_intermediate_security_measures';\r\nvIncrGroupDim = 'tp_incr_temp_groups_' | pAppId;\r\ncApprovalDim = ATTRS('}tp_applications', pAppId, 'ApprovalDimension');\r\ncApprovalSubset = ATTRS('}tp_applications', pAppId, 'ApprovalSubset');\r\nvMultiThreads = StringToNumber(pMultiThreads);\r\n\r\n#***\r\n#delete the application subset that contains this application Id only\r\nvTempAppSubset = 'temp_app_' | pAppId;\r\nIF (SubsetExists(cIMApplicationDim, vTempAppSubset)>0);\r\n\tSubsetDestroy(cIMApplicationDim, vTempAppSubset);\r\nEndif;\r\n\r\n#***\r\n#Delete the temp dimension that stores list of changed groups\r\nIF (pIncremental @= 'Y');\r\n\tIF (DimensionExists(vIncrGroupDim) >0);\r\n\t\tDimensionDestroy(vIncrGroupDim);\r\n\tEndif;\r\nEndif;\r\n\r\n#***\r\n#delete group subset that contains groups in the vIncrGroupDim\r\nIF (pIncremental @= 'Y');\r\n\tvTempGroupSubset = 'temp_group_' | pAppId;\r\n\tvGroupsControlDim = '}Groups';\r\n\tIF (SubsetExists(vGroupsControlDim, vTempGroupSubset)>0);\r\n\t\tSubsetDestroy(vGroupsControlDim, vTempGroupSubset);\r\n\tEndif;\r\nEndif;\r\n\r\n#***\r\nif (vMultiThreads >1);\r\nlooper = 1;\r\n\tWhile (looper <= vMultiThreads);\r\n\t\tvSubsetName = 'update_thread' | numberToString(looper);\r\n\r\n\t\tIF (SubsetExists(cApprovalDim, vSubsetName) >0);\r\n\t\t\tSubsetDestroy(cApprovalDim, vSubsetName);\r\n\t\tEndif;\r\n\t\tlooper = looper +1;\r\n\tEnd;\r\nEndif;\r\n\r\n#***\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pUpdateIntermediateSecurity",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        },
+        {
+            "Name": "pIncremental",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pMultiThreads",
+            "Prompt": "",
+            "Value": "5",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_rights_update_RDCLS_post"
+    }
+}

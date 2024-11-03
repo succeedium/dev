@@ -1,0 +1,65 @@
+{
+    "Name": "}Drill_ProductAnalysis",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "cubename",
+            "Prompt": "",
+            "Value": "Revenue",
+            "Type": "String"
+        },
+        {
+            "Name": "organization",
+            "Prompt": "",
+            "Value": "Total Company",
+            "Type": "String"
+        },
+        {
+            "Name": "Channel",
+            "Prompt": "",
+            "Value": "Channel Total",
+            "Type": "String"
+        },
+        {
+            "Name": "product",
+            "Prompt": "",
+            "Value": "Product Total",
+            "Type": "String"
+        },
+        {
+            "Name": "Month",
+            "Prompt": "",
+            "Value": "Year",
+            "Type": "String"
+        },
+        {
+            "Name": "Year",
+            "Prompt": "",
+            "Value": "Y1",
+            "Type": "String"
+        },
+        {
+            "Name": "Version",
+            "Prompt": "",
+            "Value": "Version 1",
+            "Type": "String"
+        },
+        {
+            "Name": "Revenue",
+            "Prompt": "",
+            "Value": "Unit Price",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}Drill_ProductAnalysis"
+    }
+}

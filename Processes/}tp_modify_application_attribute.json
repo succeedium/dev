@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_modify_application_attribute",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Parameters:', \r\npExecutionId, pAppId, pAttrName, pAttrValue, pControl);\r\nEndIf;\r\n\r\n#***\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Check application id', pAppId);\r\nEndIf;\r\n\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\nIf (DIMIX(cApplicationsDim, pAppId) = 0);\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n'pGuid', pExecutionId, \r\n'pProcess', cTM1Process, \r\n'pErrorCode', 'TI_NODE_NOT_EXIST',\r\n'pErrorDetails', cApplicationsDim | ', ' | pAppId,\r\n'pControl', pControl);\r\n\r\nProcessError;\r\nEndIf;\r\n\r\n#***\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Check application attribute', pAttrName);\r\nEndIf;\r\n\r\ncApplicationsAttrDim = '}ElementAttributes_' | cApplicationsDim;\r\nIf (DIMIX(cApplicationsAttrDim, pAttrName) = 0);\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n'pGuid', pExecutionId, \r\n'pProcess', cTM1Process, \r\n'pErrorCode', 'TI_NODE_NOT_EXIST',\r\n'pErrorDetails', cApplicationsAttrDim | ', ' | pAttrName,\r\n'pControl', pControl);\r\n\r\nProcessError;\r\nEndIf;\r\n\r\n#***\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Set application attribute', pAttrValue);\r\nEndIf;\r\n\r\nIf (pAttrName @= 'IsRunningMaintenance');\r\n\tIf (pAttrValue @= 'Y');\r\n\t\t# insure an application task is not running on this server\r\n\t\tcAppsDimSize = DIMSIZ(cApplicationsDim);\r\n\t\tvIndex = 1;\r\n\t\tWhile (vIndex <= cAppsDimSize);\r\n\t\t\tvElement = DIMNM(cApplicationsDim, vIndex);\r\n\t\t\tcurrentValue = ATTRS(cApplicationsDim, vElement, 'IsRunningMaintenance');\r\n\t\t\tIf ('Y' @= currentValue);\r\n\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t'pErrorCode', 'TI_ATTR_ALREADY_SET',\r\n\t\t\t\t'pErrorDetails', cApplicationsAttrDim | ', ' | pAttrName,\r\n\t\t\t\t'pControl', pControl);\r\n\t\t\t\tProcessError;\r\n\t\t\tEndIf;\r\n\t\t\tvIndex = vIndex+1;\r\n\t\tEnd;\r\n\tEndIf;\r\nEndIf;\r\n\r\nAttrPutS(pAttrValue, cApplicationsDim, pAppId, pAttrName);\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pAttrName",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pAttrValue",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_modify_application_attribute"
+    }
+}

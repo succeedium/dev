@@ -1,0 +1,29 @@
+{
+    "Name": "}tp_set_dr_capabilities",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "cControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\ncSystemConfigDim = cControlPrefix | 'tp_system_config';\r\nIf (DimensionExists(cSystemConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncSecurityModeNode = 'IntegratedSecurityMode';\r\ncConfigValueAttr = 'ConfigValue';\r\nvSecurityMode = ATTRS(cSystemConfigDim, cSecurityModeNode, cConfigValueAttr);\r\n\r\n#Grant DataReservation capabilities to the tp_everyone group\r\n\r\ncCapabilityCube = '}Capabilities';\r\n\r\ncCognosEveryoneGroup = 'CAMID(\"::Everyone\")';\r\ncTpEveryoneGroup = cControlPrefix | 'tp_Everyone';\r\nIf (vSecurityMode @= '5');\r\n\r\n\tIf (DIMIX('}Groups', cCognosEveryoneGroup) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\tCellPutS('Grant', cCapabilityCube, 'ManageDataReservation', 'EXECUTE', cCognosEveryoneGroup);\r\n\tCellPutS('Grant', cCapabilityCube, 'DataReservationOverride', 'EXECUTE', cCognosEveryoneGroup);\r\nElse;\r\n\tIf (DIMIX('}Groups', cTpEveryoneGroup) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\tCellPutS('Grant', cCapabilityCube, 'ManageDataReservation', 'EXECUTE', cTpEveryoneGroup);\r\n\tCellPutS('Grant', cCapabilityCube, 'DataReservationOverride', 'EXECUTE', cTpEveryoneGroup);\r\nEndIf;\r\n\r\n#***\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_set_dr_capabilities"
+    }
+}

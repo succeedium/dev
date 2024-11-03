@@ -1,0 +1,103 @@
+{
+    "Name": "}tp_util_import_cube",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names',\r\n'pExecutionId', pExecutionId, 'pProcess', cTM1Process, 'pControl', pControl);\r\n\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\n\r\ncTM1Log = cPrologLog;\r\n\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cControlPrefix | 'tp_config', 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\t\t\t\tpExecutionId, pSourceFile, pControl);\r\nEndIf;\r\n\r\n#*** Set local variables\r\nDataSourceType = 'CHARACTERDELIMITED';\r\nDatasourceASCIIDelimiter = CHAR(StringToNumber(pDelimiter));\r\nDatasourceASCIIQuoteCharacter = char(StringToNumber(pQuote));\r\nDatasourceASCIIHeaderRecords = 0;\r\nDatasourceNameForServer = pSourceFile;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'DataSourceType: ' | DataSourceType);\r\n\tTextOutput(cTM1Log, 'DatasourceASCIIDelimiter: ' | DatasourceASCIIDelimiter);\r\n\tTextOutput(cTM1Log, 'DatasourceASCIIHeaderRecords: ' | NumberToString(DatasourceASCIIHeaderRecords));\r\n\tTextOutput(cTM1Log, 'DatasourceNameForServer: ' | DatasourceNameForServer);\r\nEndIf;\r\n\r\n#*** Set input file encoding as UTF-8\r\n\r\nSetInputCharacterSet('TM1CS_UTF8');\r\n\r\n#***\r\n\r\nIf (CubeExists(pCube) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (FileExists(pSourceFile) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncDimMax = 4;\r\ncDim1 = '';\r\ncDim2 = '';\r\ncDim3 = '';\r\ncDim4 = '';\r\n\r\nvIndex = 1;\r\nWhile (vIndex <> 0);\r\n\tvDim = TABDIM(pCube, vIndex);\r\n\t\r\n\tIf (vIndex = 1);\r\n\t\tcDim1 = vDim;\r\n\tElseIf (vIndex = 2);\r\n\t\tcDim2 = vDim;\r\n\tElseIf (vIndex = 3);\r\n\t\tcDim3 = vDim;\r\n\tElseIf (vIndex = 4);\r\n\t\tcDim4 = vDim;\r\n\tEndIf;\r\n\t\r\n\tIf (vDim @<> '');\r\n\t\tvIndex = vIndex + 1;\r\n\tElse;\r\n\t\tcDimCount = vIndex - 1;\r\n\t\tvIndex = 0;\r\n\tEndIf;\r\nEnd;\r\n\r\nIf (cDimCount > cDimMax);\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Dimension count:', NumberToString(cDimCount));\r\n\tEndIf;\r\n\t\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n#*** Split slicer\r\nvSlicer = pSlicer;\r\ncScanDelimiter = '|';\r\n\r\ncSlicer1 = '';\r\ncSlicer2 = '';\r\ncSlicer3 = '';\r\ncSlicer4 = '';\r\n\r\ncStarPos1 = 0;\r\ncStarPos2 = 0;\r\ncStarPos3 = 0;\r\ncStarPos4 = 0;\r\n\r\nvStarIndex = 0;\r\nvIndex = 1;\r\nWhile (vIndex <= cDimCount);\r\n    vScanIndex = SCAN(cScanDelimiter, vSlicer);\r\n    If (vScanIndex <> 0);\r\n    \tvScanToken = SUBST(vSlicer, 1, vScanIndex - 1);\r\n    \tvSlicer = SUBST(vSlicer, vScanIndex + 1, LONG(vSlicer) - vScanIndex);\r\n    Else;\r\n    \tvScanToken = vSlicer;\r\n    \tvSlicer = '';\r\n    EndIf;\r\n    \r\n    If (vIndex = 1);\r\n\t\tcSlicer1 = vScanToken;\r\n\tElseIf (vIndex = 2);\r\n\t\tcSlicer2 = vScanToken;\r\n\tElseIf (vIndex = 3);\r\n\t\tcSlicer3 = vScanToken;\r\n\tElseIf (vIndex = 4);\r\n\t\tcSlicer4 = vScanToken;\r\n\tEndIf;\r\n\t\r\n\tIf (vScanToken @= '*' % vScanToken @= '');\r\n\t\tvStarIndex = vStarIndex + 1;\r\n\t\t\r\n\t\tIf (vStarIndex = 1);\r\n\t\t\tcStarPos1 = vIndex;\r\n\t\tElseIf (vStarIndex = 2);\r\n\t\t\tcStarPos2 = vIndex;\r\n\t\tElseIf (vStarIndex = 3);\r\n\t\t\tcStarPos3 = vIndex;\r\n\t\tElseIf (vStarIndex = 4);\r\n\t\t\tcStarPos4 = vIndex;\r\n\t\tEndIf;\r\n\tEndIf;\r\n\t\r\n\tvIndex = vIndex + 1;\r\n\tIf (vSlicer @= cScanDelimiter % vSlicer @= '');\r\n\t\tvIndex = cDimCount + 1;\r\n\tEndIf;\r\nEnd;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Slicer:',\r\n\t\t\t\tcSlicer1, cSlicer2, cSlicer3, cSlicer4);\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Star positions:',\r\n\t\t\t\tNumberToString(cStarPos1), NumberToString(cStarPos2), NumberToString(cStarPos3), NumberToString(cStarPos4));\r\nEndIf;\r\n\r\n\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncTM1Log = cDataLog;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Values:',\r\n\t\t\t\tvarValue, varElement1, varElement2, varElement3, varElement4);\r\nEndIf;\r\n\r\nvElem1 = cSlicer1;\r\nvElem2 = cSlicer2;\r\nvElem3 = cSlicer3;\r\nvElem4 = cSlicer4;\r\n\r\nvIndex = 1;\r\nWhile (vIndex <= cDimCount);\r\n\tIf (vIndex = 1 & cStarPos1 <> 0);\r\n\t\tIf (cStarPos1 = 1);\r\n\t\t\tvElem1 = varElement1;\r\n\t\tElseIf (cStarPos1 = 2);\r\n\t\t\tvElem2 = varElement1;\r\n\t\tElseIf (cStarPos1 = 3);\r\n\t\t\tvElem3 = varElement1;\r\n\t\tElseIf (cStarPos1 = 4);\r\n\t\t\tvElem4 = varElement1;\r\n\t\tEndIf;\r\n\tElseIf (vIndex = 2 & cStarPos2 <> 0);\r\n\t\tIf (cStarPos2 = 1);\r\n\t\t\tvElem1 = varElement2;\r\n\t\tElseIf (cStarPos2 = 2);\r\n\t\t\tvElem2 = varElement2;\r\n\t\tElseIf (cStarPos2 = 3);\r\n\t\t\tvElem3 = varElement2;\r\n\t\tElseIf (cStarPos2 = 4);\r\n\t\t\tvElem4 = varElement2;\r\n\t\tEndIf;\t\r\n\tElseIf (vIndex = 3 & cStarPos3 <> 0);\r\n\t\tIf (cStarPos3 = 1);\r\n\t\t\tvElem1 = varElement3;\r\n\t\tElseIf (cStarPos3 = 2);\r\n\t\t\tvElem2 = varElement3;\r\n\t\tElseIf (cStarPos3 = 3);\r\n\t\t\tvElem3 = varElement3;\r\n\t\tElseIf (cStarPos3 = 4);\r\n\t\t\tvElem4 = varElement3;\r\n\t\tEndIf;\r\n\tElseIf (vIndex = 4 & cStarPos4 <> 0);\r\n\t\tIf (cStarPos4 = 1);\r\n\t\t\tvElem1 = varElement4;\r\n\t\tElseIf (cStarPos4 = 2);\r\n\t\t\tvElem2 = varElement4;\r\n\t\tElseIf (cStarPos4 = 3);\r\n\t\t\tvElem3 = varElement4;\r\n\t\tElseIf (cStarPos4 = 4);\r\n\t\t\tvElem4 = varElement4;\r\n\t\tEndIf;\r\n\tEndIf;\r\n\r\n\tvIndex = vIndex + 1;\r\nEnd;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'New Values:',\r\n\t\t\t\tvarValue, vElem1, vElem2, vElem3, vElem4);\r\nEndIf;\r\n\r\n\r\n#*** Insert value into cube\r\n\r\nvReturnValue = ExecuteProcess('}tp_util_insert_value_into_cube',\r\n'pCube', pCube, 'pValue', varValue, 'pElem1', vElem1, 'pElem2', vElem2, 'pElem3', vElem3, 'pElem4', vElem4);\r\n\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "ASCII",
+        "asciiDecimalSeparator": ".",
+        "asciiDelimiterChar": ",",
+        "asciiDelimiterType": "Character",
+        "asciiHeaderRecords": 0,
+        "asciiQuoteCharacter": "\"",
+        "asciiThousandSeparator": ",",
+        "dataSourceNameForClient": "dummy.txt",
+        "dataSourceNameForServer": "dummy.txt"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pCube",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSourceFile",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSlicer",
+            "Prompt": "",
+            "Value": "*|*|*|*|",
+            "Type": "String"
+        },
+        {
+            "Name": "pDelimiter",
+            "Prompt": "",
+            "Value": "9",
+            "Type": "String"
+        },
+        {
+            "Name": "pQuote",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [
+        {
+            "Name": "varValue",
+            "Type": "String",
+            "Position": 1,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varElement1",
+            "Type": "String",
+            "Position": 2,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varElement2",
+            "Type": "String",
+            "Position": 3,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varElement3",
+            "Type": "String",
+            "Position": 4,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varElement4",
+            "Type": "String",
+            "Position": 5,
+            "StartByte": 0,
+            "EndByte": 0
+        }
+    ],
+    "Attributes": {
+        "Caption": "}tp_util_import_cube"
+    }
+}

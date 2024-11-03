@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_mdx_find_consolidate_descendants",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n#*** Check dimension\r\nIf (DimensionExists(pDim) = 0);\r\nProcessError;\r\nEndIf;\r\n\r\n#*** Check node in dimension\r\nIf (DIMIX(pDim, pNode) = 0);\r\nProcessError;\r\nEndIf;\r\n\r\ncNodePName = DimensionElementPrincipalName(pDim, pNode);\r\n\r\n\r\n#*** Create MDX\r\n\r\nStringGlobalVariable('gMdxFindConsolidateDescendants');\r\n\r\nvMdxCon = '{INTERSECT(EXCEPT(DESCENDANTS([' | pDim | '].[' | cNodePName  | ']),';\r\nvMdxCon = vMdxCon | 'TM1FILTERBYLEVEL(DESCENDANTS([' | pDim | '].[' | cNodePName | ']),0)),';\r\nvMdxCon = vMdxCon | '{TM1SubsetToSet([' | pDim | '],\"' | pSubset | '\")}),';\r\nvMdxCon = vMdxCon | '[' | pDim | '].[' | cNodePName | ']}';\r\ngMdxFindConsolidateDescendants = vMdxCon;\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_mdx_find_consolidate_descendants"
+    }
+}

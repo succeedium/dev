@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_workflow_update_user_name",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t\t'pProcess', cTM1Process, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\t\tpExecutionId, pAppId, pUserName, pOldUserName, pControl);\r\nEndIf;\r\n\r\n#***\r\n\r\ncApprovalDim =  ATTRS('}tp_applications', pAppId,  'ApprovalDimension');\r\ncApprovalSubset =ATTRS('}tp_applications', pAppId,  'ApprovalSubset');\r\ncIsActive =ATTRS('}tp_applications', pAppId, 'IsActive');\r\ncShadowApprovalDim =ATTRS('}tp_applications', pAppId, 'ApprovalShadowDimension');\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', cApprovalDim, cApprovalSubset, cIsActive,cShadowApprovalDim );\r\nEndIf;\r\n\r\n#***\r\nIf (cShadowApprovalDim @= '');\r\n\tcStateCube = cControlPrefix | 'tp_central_application_state';\r\nElse;\r\n\tcStateCube = cControlPrefix | 'tp_application_state}' | pAppId;\r\nEndIf;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Check state cube: ' | cStateCube);\r\nEndIf;\r\n\r\nIf (CubeExists(cStateCube) = 0);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_CUBE_NOT_EXIST',\r\n\t\t'pErrorDetails', cStateCube,\r\n\t\t'pControl', pControl);\r\n\t\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** \r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Update user name in state cube');\r\nEndIf;\r\n\r\ncCurrentOwner = 'CurrentOwner';\r\ncCurrentOwnerId = 'CurrentOwnerId';\r\ncStateChangeUser = 'StateChangeUser';\r\ncDataChangeUser = 'DataChangeUser';\r\n\r\nIf (cShadowApprovalDim @= '');\r\n\tvOwnerValue = CellGetS(cStateCube, pAppId, cCurrentOwner);\r\n\tvOwnerIdValue = CellGetS(cStateCube, pAppId, cCurrentOwnerId);\r\n\tvStateChangeUserValue = CellGetS(cStateCube, pAppId, cStateChangeUser);\r\n\tvDataChangeUserValue = CellGetS(cStateCube, pAppId, cDataChangeUser);\r\n\r\n\tIf (vOwnerIdValue @= TM1User);\r\n\t\tIf (vOwnerValue @<> pUserName);\r\n\t\t\tCellPutS(pUserName, cStateCube, pAppId, cCurrentOwner);\r\n\t\tEndIf;\r\n\tEndIf;\r\n\r\n\tIf (vStateChangeUserValue @= pOldUserName);\r\n\t\tCellPutS(pUserName, cStateCube, pAppId, cStateChangeUser);\r\n\tEndIf;\r\n\r\n\tIf (vDataChangeUserValue @= pOldUserName);\r\n\t\tCellPutS(pUserName, cStateCube, pAppId, cDataChangeUser);\r\n\tEndIf;\r\nElse;\r\n\tcApprovalDimSize = DIMSIZ(cShadowApprovalDim);\r\n\tvIndex = 1;\r\n\tWhile (vIndex <= cApprovalDimSize);\r\n\t\tvNodePName = DIMNM(cShadowApprovalDim, vIndex);\r\n\t\t\r\n\t\tvOwnerValue = CellGetS(cStateCube, vNodePName, cCurrentOwner);\r\n\t\tvOwnerIdValue = CellGetS(cStateCube, vNodePName, cCurrentOwnerId);\r\n\t\tvStateChangeUserValue = CellGetS(cStateCube, vNodePName, cStateChangeUser);\r\n\t\tvDataChangeUserValue = CellGetS(cStateCube, vNodePName, cDataChangeUser);\r\n\t\r\n\t\tIf (vOwnerIdValue @= TM1User);\r\n\t\t\tIf (vOwnerValue @<> pUserName);\r\n\t\t\t\tCellPutS(pUserName, cStateCube, vNodePName, cCurrentOwner);\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\t\r\n\t\tIf (vStateChangeUserValue @= pOldUserName);\r\n\t\t\tCellPutS(pUserName, cStateCube, vNodePName, cStateChangeUser);\r\n\t\tEndIf;\r\n\t\r\n\t\tIf (vDataChangeUserValue @= pOldUserName);\r\n\t\t\tCellPutS(pUserName, cStateCube, vNodePName, cDataChangeUser);\r\n\t\tEndIf;\r\n\t\r\n\t\tvIndex = vIndex + 1;\r\n\tEnd;\r\nEndIf;\r\n\r\n#*** \r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Update user name in }Clients');\r\nEndIf;\r\n\r\nvDisplayUserName = ATTRS('}Clients', TM1User, '}TM1_DefaultDisplayValue');\r\nIf (vDisplayUserName @<> pUserName);\r\n\tAttrPutS(pUserName, '}Clients', TM1User, '}TM1_DefaultDisplayValue');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pUserName",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pOldUserName",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_workflow_update_user_name"
+    }
+}

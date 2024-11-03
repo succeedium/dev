@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_set_state_reviewers",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\n\r\n#*** Log File Name\r\ncTM1Process = cControlPrefix | 'tp_set_state_reviewers';\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names',\r\n'pExecutionId', pExecutionId, 'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\nProcessError;\r\nEndIf;\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\tpExecutionId, pControl, pAppId);\r\nEndIf;\r\n\r\n\r\n\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\ncAppAttrDim = '}ElementAttributes_' | cApplicationsDim;\r\ncShadowApprovalDim = '}tp_tasks}' | pAppId;\r\ncPermissionsSecurityCube = '}CellSecurity_}tp_application_permission}'|pAppId;\r\ncStateCube = '}tp_application_state}'|pAppId;\r\ncGroupsDimension = '}Groups';\r\nvGroupsSize = DIMSIZ(cGroupsDimension);\r\n\r\ncApprovalDimSize = DIMSIZ(cShadowApprovalDim);\r\nvIndex = 1;\r\nWhile (vIndex <= cApprovalDimSize);\r\n\tcNodeId = DIMNM(cShadowApprovalDim, vIndex);\r\n\tcReviewer = '';\r\n\tvGroupIndex = 1;\r\n\tWhile (vGroupIndex <= vGroupsSize & cReviewer @= '');\r\n\t\tcGroupId = DIMNM(cGroupsDimension, vGroupIndex);\r\n\t\tvPermValue = CellGetS(cPermissionsSecurityCube, cNodeId, 'REJECT', cGroupId);\r\n\t\tIf (vPermValue @= 'READ');\r\n\t\t\tcReviewer = cGroupId; \r\n\t\tEndIf;\r\n\t\tvGroupIndex = vGroupIndex + 1;\r\n\tEnd;\r\n\tCellPutS(cReviewer, cStateCube, cNodeId, 'Reviewer'); \r\n\tvIndex = vIndex + 1;\r\nEnd;\r\n\r\n  \r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_set_state_reviewers"
+    }
+}

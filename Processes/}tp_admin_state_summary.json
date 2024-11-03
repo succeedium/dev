@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_admin_state_summary",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\nDatasourceASCIIDelimiter = ',';\r\nDatasourceASCIIQuoteCharacter='';\r\n\r\n# Find application id.\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\nIf (DIMIX(cApplicationsDim, pAppId) = 0);\r\nvAppId = DIMNM(cApplicationsDim, 1);\r\nElse;\r\nvAppId = pAppId;\r\nEndIf;\r\n\r\ncStateCube = cControlPrefix | 'tp_application_state}' | vAppId;\r\nIf (CubeExists(cStateCube) = 0);\r\nProcessError;\r\nEndIf;\r\n\r\n# Define elements for approval node info\r\ncNodeInfoDim = cControlPrefix | 'tp_node_info';\r\n\r\ncState = 'State';\r\ncViewed = 'Viewed';\r\ncSaved = 'Saved';\r\ncReviewed = 'Reviewed';\r\ncBeingEdited = 'BeingEdited';\r\ncCurrentOwner = 'CurrentOwner';\r\ncCurrentOwnerId = 'CurrentOwnerId';\r\ncStartEditingDate = 'StartEditingDate';\r\ncStateChangeUser = 'StateChangeUser';\r\ncStateChangeDate = 'StateChangeDate';\r\ncDataChangeUser = 'DataChangeUser';\r\ncDataChangeDate = 'DataChangeDate';\r\n\r\n# define state values\r\ncNotStarted = '0';\r\ncIncomplete = '1';\r\ncWorkInProgress = '2';\r\ncReady = '3';\r\ncLocked = '4';\r\n\r\n# Get approval hierarchy\r\ncApprovalDim =  ATTRS('}tp_applications', pAppId,  'ApprovalDimension');\r\ncApprovalSubset =ATTRS('}tp_applications', pAppId,  'ApprovalSubset');\r\ncIsActive =ATTRS('}tp_applications', pAppId, 'IsActive');\r\ncShadowApprovalDim =ATTRS('}tp_applications', pAppId, 'ApprovalShadowDimension');\r\n\r\n# Define report variables\r\nvC_NotStarted_Name = 'Contributor (Not Started)';\r\nvC_NotStarted_Count = 0;\r\nvC_WorkInProgress_Name = 'Contributor (Work In Progress)';\r\nvC_WorkInProgress_Count = 0;\r\nvC_Incomplete_Name = 'Contributor (Incomplete)';\r\nvC_Incomplete_Count = 0;\r\nvC_Ready_Name = 'Contributor (Ready)';\r\nvC_Ready_Count = 0;\r\nvC_Locked_Name = 'Contributor (Locked)';\r\nvC_Locked_Count = 0;\r\nvC_Viewed_Name = 'Contributor (Viewed)';\r\nvC_Viewed_Count = 0;\r\nvC_Saved_Name = 'Contributor (Saved)';\r\nvC_Saved_Count = 0;\r\nvC_Reviewed_Name = 'Contributor (Reviewed)';\r\nvC_Reviewed_Count = 0;\r\n\r\nvR_NotStarted_Name = 'Reviewer (Not Started)';\r\nvR_NotStarted_Count = 0;\r\nvR_WOrkInProgress_Name = 'Reviewer (Work In Progress)';\r\nvR_WorkInProgress_Count = 0;\r\nvR_Incomplete_Name = 'Reviewer (Incomplete)';\r\nvR_Incomplete_Count = 0;\r\nvR_Ready_Name = 'Reviewer (Ready)';\r\nvR_Ready_Count = 0;\r\nvR_Locked_Name = 'Reviewer (Locked)';\r\nvR_Locked_Count = 0;\r\nvR_Viewed_Name = 'Reviewer (Viewed)';\r\nvR_Viewed_Count = 0;\r\nvR_Saved_Name = 'Reviewer (Saved)';\r\nvR_Saved_Count = 0;\r\nvR_Reviewed_Name = 'Reviewer (Reviewed)';\r\nvR_Reviewed_Count = 0;\r\n\r\n### Count nodes based on status\r\ncApprovalSubsetSize = SubsetGetSize(cShadowApprovalDim, cApprovalSubset);\r\nvIndex = 1;\r\nWhile (vIndex <= cApprovalSubsetSize);\r\nvNode = SubsetGetElementName(cShadowApprovalDim, cApprovalSubset, vIndex);\r\nvType = DTYPE(cShadowApprovalDim, vNode);\r\n\r\n# state\r\nvValue = CellGetS(cStateCube, vNode, cState);\r\nIf (vType @= 'C');\r\nIf (vValue @= '1');\r\nvR_Incomplete_Count = vR_Incomplete_Count + 1;\r\nElseIf (vValue @= '2');\r\nvR_WorkInProgress_Count = vR_WorkInProgress_Count + 1;\r\nElseIf (vValue @= '3');\r\nvR_Ready_Count = vR_Ready_Count + 1;\r\nElseIf (vValue @= '4');\r\nvR_Locked_Count = vR_Locked_Count + 1;\r\nElse;\r\nvR_NotStarted_Count = vR_NotStarted_Count + 1;\r\nEndIf;\r\nElse;\r\nIf (vValue @= '1');\r\nvC_Incomplete_Count = vC_Incomplete_Count + 1;\r\nElseIf (vValue @= '2');\r\nvC_WorkInProgress_Count = vC_WorkInProgress_Count + 1;\r\nElseIf (vValue @= '3');\r\nvC_Ready_Count = vC_Ready_Count + 1;\r\nElseIf (vValue @= '4');\r\nvC_Locked_Count = vC_Locked_Count + 1;\r\nElse;\r\nvC_NotStarted_Count = vC_NotStarted_Count + 1;\r\nEndIf;\r\nEndIf;\r\n\r\n# Viewed\r\nvValue = CellGetS(cStateCube, vNode, cViewed);\r\nIf (vType @= 'C');\r\nIf (vValue @= 'Y');\r\nvR_Viewed_Count = vR_Viewed_Count + 1;\r\nEndIf;\r\nElse;\r\nIf (vValue @= 'Y');\r\nvC_Viewed_Count = vC_Viewed_Count + 1;\r\nEndIf;\r\nEndIf;\r\n\r\n# Saved\r\nvValue = CellGetS(cStateCube, vNode, cSaved);\r\nIf (vType @= 'C');\r\nIf (vValue @= 'Y');\r\nvR_Saved_Count = vR_Saved_Count + 1;\r\nEndIf;\r\nElse;\r\nIf (vValue @= 'Y');\r\nvC_Saved_Count = vC_Saved_Count + 1;\r\nEndIf;\r\nEndIf;\r\n\r\n# Reviewed\r\nvValue = CellGetS(cStateCube, vNode, cReviewed);\r\nIf (vType @= 'C');\r\nIf (vValue @= 'Y');\r\nvR_Reviewed_Count = vR_Reviewed_Count + 1;\r\nEndIf;\r\nElse;\r\nIf (vValue @= 'Y');\r\nvC_Reviewed_Count = vC_Reviewed_Count + 1;\r\nEndIf;\r\nEndIf;\r\n\r\nvIndex = vIndex + 1;\r\nEnd;\r\n\r\n### Create report\r\nTextOutPut(pSummaryReportPath, vC_NotStarted_Name, NumberToString(vC_NotStarted_Count));\r\nTextOutPut(pSummaryReportPath, vC_Incomplete_Name, NumberToString(vC_Incomplete_Count));\r\nTextOutPut(pSummaryReportPath, vC_WorkInProgress_Name, NumberToString(vC_WorkInProgress_Count));\r\nTextOutPut(pSummaryReportPath, vC_Ready_Name, NumberToString(vC_Ready_Count));\r\nTextOutPut(pSummaryReportPath, vC_Locked_Name, NumberToString(vC_Locked_Count));\r\nTextOutPut(pSummaryReportPath, vC_Viewed_Name, NumberToString(vC_Viewed_Count));\r\nTextOutPut(pSummaryReportPath, vC_Saved_Name, NumberToString(vC_Saved_Count));\r\nTextOutPut(pSummaryReportPath, vC_Reviewed_Name, NumberToString(vC_Reviewed_Count));\r\n\r\nTextOutPut(pSummaryReportPath, vR_NotStarted_Name, NumberToString(vR_NotStarted_Count));\r\nTextOutPut(pSummaryReportPath, vR_Incomplete_Name, NumberToString(vR_Incomplete_Count));\r\nTextOutPut(pSummaryReportPath, vR_WorkInProgress_Name, NumberToString(vR_WorkInProgress_Count));\r\nTextOutPut(pSummaryReportPath, vR_Ready_Name, NumberToString(vR_Ready_Count));\r\nTextOutPut(pSummaryReportPath, vR_Locked_Name, NumberToString(vR_Locked_Count));\r\nTextOutPut(pSummaryReportPath, vR_Viewed_Name, NumberToString(vR_Viewed_Count));\r\nTextOutPut(pSummaryReportPath, vR_Saved_Name, NumberToString(vR_Saved_Count));\r\nTextOutPut(pSummaryReportPath, vR_Reviewed_Name, NumberToString(vR_Reviewed_Count));\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pSummaryReportPath",
+            "Prompt": "",
+            "Value": "C:\\temp\\state_summary.csv",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_admin_state_summary"
+    }
+}

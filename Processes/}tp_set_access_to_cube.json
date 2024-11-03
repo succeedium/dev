@@ -1,0 +1,63 @@
+{
+    "Name": "}tp_set_access_to_cube",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncTM1Process = cControlPrefix | 'tp_set_access_to_cube';\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names',\r\n'pExecutionId', pExecutionId, 'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\nProcessError;\r\nEndIf;\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\ncGenerateLog = ATTRS(cControlPrefix | 'tp_config', 'Generate TI Log', 'String Value');\r\nElse;\r\ncGenerateLog = 'N';\r\nEndIf;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\npExecutionId, pSourceFile, pControl);\r\nEndIf;\r\n\r\n#*** Set local variables\r\nDataSourceType = 'CHARACTERDELIMITED';\r\nDatasourceASCIIDelimiter = CHAR(9);\r\nDatasourceASCIIHeaderRecords = 0;\r\nDatasourceNameForServer = pSourceFile;\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'DataSourceType: ' | DataSourceType);\r\nTextOutput(cTM1Log, 'DatasourceASCIIDelimiter: ' | DatasourceASCIIDelimiter);\r\nTextOutput(cTM1Log, 'DatasourceASCIIHeaderRecords: ' | NumberToString(DatasourceASCIIHeaderRecords));\r\nTextOutput(cTM1Log, 'DatasourceNameForServer: ' | DatasourceNameForServer);\r\nEndIf;\r\n\r\n#*** Set input file encoding as UTF-8\r\n\r\nSetInputCharacterSet('TM1CS_UTF8');\r\n\r\n#*** Check TM1 security right\r\n\r\ncAdmin = 'ADMIN';\r\ncLock = 'LOCK';\r\ncReserve = 'RESERVE';\r\ncWrite = 'WRITE';\r\ncRead = 'READ';\r\ncNone = 'NONE';\r\n\r\nvRight = '';\r\nIf (pRight @= cAdmin);\r\nvRight = cAdmin;\r\nElseIf (pRight @= cLock);\r\nvRight = cLock;\r\nElseIf (pRight @= cReserve);\r\nvRight = cReserve;\r\nElseIf (pRight @= cWrite);\r\nvRight = cWrite;\r\nElseIf (pRight @= cRead);\r\nvRight = cRead;\r\nElseIf (pRight @= cNone);\r\nvRight = cNone;\r\nElse;\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube',\r\n'pGuid', pExecutionId,\r\n'pProcess', cTM1Process,\r\n'pErrorCode', 'TI_WRONG_PERMISSION',\r\n'pErrorDetails', pRight | ', ' | pCube,\r\n'pControl', pControl);\r\n\r\nProcessError;\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncCubeSecurityCube = '}CubeSecurity';\r\ncDimensionSecurityCube = '}DimensionSecurity';\r\ncElementAttributesPrefix = '}ElementAttributes_';\r\n\r\nCellPutS(vRight, cCubeSecurityCube, pCube, varGroup);\r\n\r\nvIndex = 1;\r\nWhile (vIndex <> 0);\r\nvDim = TABDIM(pCube, vIndex);\r\n\r\nIf (vDim @<> '' & vRight @<> cNone);\r\n\r\nCellPutS(cRead, cDimensionSecurityCube, vDim, varGroup);\r\nvElementAttributes = cElementAttributesPrefix | vDim;\r\nIf (DimensionExists(vElementAttributes) <> 0);\r\nCellPutS(cRead, cDimensionSecurityCube, cElementAttributesPrefix | vDim, varGroup);\r\nEndIf;\r\nIf (CubeExists(vElementAttributes) <> 0);\r\nCellPutS(cRead, cCubeSecurityCube, cElementAttributesPrefix | vDim, varGroup);\r\nEndIf;\r\n\r\nEndIf;\r\n\r\nIf (vDim @<> '');\r\nvIndex = vIndex + 1;\r\nElse;\r\nvIndex = 0;\r\nEndIf;\r\nEnd;\r\n\r\n\r\n",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "ASCII",
+        "asciiDecimalSeparator": ".",
+        "asciiDelimiterChar": ",",
+        "asciiDelimiterType": "Character",
+        "asciiHeaderRecords": 0,
+        "asciiQuoteCharacter": "\"",
+        "asciiThousandSeparator": ",",
+        "dataSourceNameForClient": "dummy.txt",
+        "dataSourceNameForServer": "dummy.txt"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pCube",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pRight",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSourceFile",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [
+        {
+            "Name": "varGroup",
+            "Type": "String",
+            "Position": 1,
+            "StartByte": 0,
+            "EndByte": 0
+        }
+    ],
+    "Attributes": {
+        "Caption": "}tp_set_access_to_cube"
+    }
+}

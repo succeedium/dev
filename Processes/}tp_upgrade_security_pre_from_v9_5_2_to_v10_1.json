@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_upgrade_security_pre_from_v9_5_2_to_v10_1",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\npControl = 'Y';\r\n cControlPrefix = '}';\r\n\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** update element level security\r\ncPermissionsCube = '}CellSecurity_' | cControlPrefix | 'tp_application_permission}' | pAppId;\r\ncSecurityRead = 'READ';\r\ncSecurityWrite = 'WRITE';\r\ncSecurityLock = 'WRITE';\r\n\r\ncApprovalSubsetSize = SubsetGetSize(pApprovalDim, pApprovalSubset);\r\nvIndex = cApprovalSubsetSize;\r\n\r\ncGroupsDim = '}Groups';\r\n\r\nWhile ( vIndex > 0 );\r\n\tcApprovalElement = SubsetGetElementName (pApprovalDim, pApprovalSubset, vIndex);\r\n\tvIsLeafNode = 'T';\r\n\tIf (DTYPE(pApprovalDim, cApprovalElement) @= 'C');\r\n\t\tvIsLeafNode = 'F';\r\n\tElse;\r\n\t\tvIsLeafNode = 'T';\r\n\tEndIf;\r\n\t\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Found Element ', cApprovalElement, ' isLeaf=', vIsLeafNode);\r\n\tEndIf;\r\n\t\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Loop through groups on leaf node ', cGroupsDim);\r\n\tEndIf;\r\n\tgroupLooper = 1;\r\n\tcGroupName =  DIMNM(cGroupsDim,groupLooper);\r\n\tWhile (cGroupName @<> '');\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Get permission for group ', cGroupName, cPermissionsCube);\r\n\t\tEndIf;\r\n\t\tcView = CellGetS(cPermissionsCube, cApprovalElement, 'VIEW', cGroupName);\r\n\t\tcEdit = CellGetS(cPermissionsCube, cApprovalElement, 'EDIT', cGroupName);\r\n\t\tcSubmit = CellGetS(cPermissionsCube, cApprovalElement, 'SUBMIT', cGroupName);\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'EDIT permission for group ', cGroupName, ' is ', cEdit);\r\n\t\tEndIf;\r\n\r\n\t\tIf (vIsLeafNode @= 'T');\r\n\t\t\tIf (cEdit @= 'READ' );\r\n\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Change Element security to WRITE', cApprovalElement);\r\n\t\t\t\tEndIf;\r\n\t\t\t\tElementSecurityPut (cSecurityWrite, pApprovalDim, cApprovalElement, cGroupName);\r\n\t\t\tEndIf;\r\n\r\n\t\t\tIf (cSubmit @= 'READ' );\r\n\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Change Element security to WRITE', cApprovalElement);\r\n\t\t\t\tEndIf;\r\n\t\t\t\tElementSecurityPut (cSecurityLock, pApprovalDim, cApprovalElement, cGroupName);\r\n\t\t\tEndIf;\r\n\t\tElse;\r\n\t\t\tIf (cView @= 'READ' );\r\n\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Change Element security to WRITE', cApprovalElement);\r\n\t\t\t\tEndIf;\r\n\t\t\t\tElementSecurityPut (cSecurityWrite, pApprovalDim, cApprovalElement, cGroupName);\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\r\n\t\tgroupLooper = groupLooper + 1;\r\n\t\tcGroupName =  DIMNM(cGroupsDim,groupLooper);\r\n\tEnd;\r\n\r\n\t\r\n\tvIndex = vIndex - 1;\r\nEnd;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_upgrade_security_pre_from_v9_5_2_to_v10_1"
+    }
+}

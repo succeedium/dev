@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_workflow_reject_node",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\ncApprovalDim =  ATTRS('}tp_applications', pAppId,  'ApprovalDimension');\r\ncApprovalSubset =ATTRS('}tp_applications', pAppId,  'ApprovalSubset');\r\ncIsActive =ATTRS('}tp_applications', pAppId, 'IsActive');\r\ncShadowApprovalDim =ATTRS('}tp_applications', pAppId, 'ApprovalShadowDimension');\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'get application attributes', cApprovalDim, cApprovalSubset, cIsActive,cShadowApprovalDim );\r\nEndIf;\r\n\r\n\r\nIf (cIsActive @<> 'Y');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_APP_NOT_ACTIVE',\r\n\t\t'pErrorDetails', pAppId,\r\n\t\t'pControl', pControl);\r\n\t\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:', pExecutionId, pTime, pAppId, pNode, pControl);\r\nEndIf;\r\n\r\n#*** Check state cube\r\n\r\ncStateCube = cControlPrefix | 'tp_application_state}' | pAppId;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Check state cube: ' | cStateCube);\r\nEndIf;\r\n\r\nIf(CubeExists(cStateCube) = 0);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_CUBE_NOT_EXIST',\r\n\t\t'pErrorDetails', cStateCube,\r\n\t\t'pControl', pControl);\r\n\r\n\tProcessError;\r\nEndIf;\r\n\r\n#***\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Check node: ' | pNode);\r\nEndIf;\r\n\r\nIf (DIMIX(cShadowApprovalDim, pNode) = 0);\r\nProcessError;\r\nEndIf;\r\n\r\n#*** Check user  privilege\r\nStringGlobalVariable('gReject');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_user_permissions', \r\n\t'pGuid', pExecutionId, 'pApplication', pAppId, 'pNode', pNode, 'pUser', TM1User, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (gReject @= 'F');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_NO_PERMISSION',\r\n\t\t'pErrorDetails', 'REJECT' | ', ' | pNode,\r\n\t\t'pControl', pControl);\r\n\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Check node state\r\n\r\ncLocked = '4';\r\ncState = 'State';\r\nvValue = CellGetS(cStateCube, pNode, cState);\r\nIf (vValue @<> cLocked);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_WRONG_STATE',\r\n\t\t'pErrorDetails', 'REJECT' | ', ' | pNode | ', ' | vValue,\r\n\t\t'pControl', pControl);\r\n\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Change state\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_change_node_state', 'pExecutionId', pExecutionId,\r\n\t\t'pTime', pTime, 'pAppId', pAppId, 'pNode', pNode, 'pPrivilege', 'REJECT', 'pUpdateAncestorState', 'Y','pControl',\r\n\t\tpControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n#*** Bounce all users who has edit conflict with this user on the node (if it is leaf)\r\ncCurrentOwnerId = 'CurrentOwnerId';\r\ncTakeOwnershipNode = 'TakeOwnershipNode';\r\ncOwnerId = CellGetS(cStateCube, pNode, cCurrentOwnerId);\r\ncOwnershipNode = CellGetS(cStateCube, pNode,cTakeOwnershipNode);\r\n\r\nIF (cOwnerId @<> '' & DIMIX('}Clients', cOwnerId) <> 0 & DTYPE(cShadowApprovalDim, pNode) @= 'N');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_bounce_conflict_users', 'pExecutionId', \r\n\t\tpExecutionId, 'pAppId', pAppId, 'pNode', pNode, 'pApprovalDim', cApprovalDim, 'pTime',pTime,\r\n\t\t'pNewOwnerID', cOwnerId, 'pCheckBouncingOnly', 'N','pBouncingMode', '', 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\t#tentatively set node state to available and empty owner so that ownership can be taken\r\n\tcAvailable = '0';\r\n\tCellPutS(cAvailable, cStateCube, pNode, cState);\r\n\tCellPutS('', cStateCube, pNode, cCurrentOwnerId);\r\n\r\n\t#return ownership back to original owner on cOwnershipNode level\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_own_node', 'pExecutionId', pExecutionId, 'pTime', pTime,\r\n\t\t'pAppId', pAppId, 'pNode', cOwnershipNode, 'pNewOwnerID', cOwnerId, 'pCheckBouncingOnly', 'N', 'pBouncingMode', '', 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nENDIF;\r\n\r\n#***\r\n\r\n#If ownerID field is empty or the owner does not exist in the }Clients dimension, then we can't return \r\n#ownership to the original owner, need to make it available so that other users can take ownership again\r\nIf ((cOwnerId @= '' % DIMIX('}Clients', cOwnerId) = 0) & DTYPE(cShadowApprovalDim, pNode) @= 'N' );\r\n\tcAvailable = '0';\r\n\tCellPutS(cAvailable, cStateCube, pNode, cState);\r\n\tCellPutS('', cStateCube, pNode, cCurrentOwnerId);\r\nEndif;\r\n\r\n#***Lock slice\r\ncApplicationCubesCube = '}tp_application_cubes';\r\ntotalCubes = DIMSIZ('}Cubes');\r\nindexCube = 1;\r\n\r\nWhile (indexCube <= totalCubes);\r\n\tcCubeName = DIMNM('}Cubes', indexCube);\r\n\tcIsAppCube = CellGetS(cApplicationCubesCube, pAppId, cCubeName);\r\n\tcCubeAddress = '';\r\n\taddConcatSymbol = 0;\r\n\tIf (cIsAppCube @= 'A');\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_util_lock_cube_slices', 'pExecutionId', pExecutionId, 'pAppId', pAppId, \r\n\t\t\t'pCube', cCubeName, 'pApprovalDim', cApprovalDim, 'pNode', pNode, 'pLock', 'N', 'pControlDim','','pControlWritableSlices','');\r\n\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\r\n\tEndIf;\r\n\tindexCube = indexCube +1;\r\nEnd;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pTime",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_workflow_reject_node"
+    }
+}

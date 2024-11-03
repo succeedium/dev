@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_upgrade_from_v9_5_1_to_v9_5_2",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n### Add element: TakeOwnershipNode\r\ncNodeInfoDim = cControlPrefix | 'tp_node_info';\r\nIf (DimensionExists(cNodeInfoDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncTakeOwnershipNode = 'TakeOwnershipNode';\r\ncStartEditingDate = 'StartEditingDate';\r\nIf (DIMIX(cNodeInfoDim, cTakeOwnershipNode) = 0);\r\n\tDimensionElementInsert(cNodeInfoDim, cStartEditingDate, cTakeOwnershipNode, 'S');\r\nEndIf;\r\n\r\n### Add attribute: Version\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\ncApplicationsAttributesDim = '}ElementAttributes_' | cApplicationsDim;\r\n\r\nIf (DimensionExists(cApplicationsDim) = 0 % DimensionExists(cApplicationsAttributesDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncApprovalDimensionAttr = 'ApprovalDimension';\r\ncVersionAttr = 'Version';\r\nIf (DIMIX(cApplicationsAttributesDim, cVersionAttr) = 0);\r\n\tAttrInsert(cApplicationsDim, cApprovalDimensionAttr, cVersionAttr, 'S');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n### Set value to version attribute\r\nIf (DIMIX(cApplicationsDim, pAppId) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nAttrPutS(pVersion, cApplicationsDim, pAppId, cVersionAttr);\r\n\r\ncTM1Process = cControlPrefix | 'tp_update_from_v9_5_1_to_v9_5_2';\r\n\r\n### Get Approval dimension and subset\r\n\r\n#* declare global variables\r\nStringGlobalVariable('gApprovalDim');\r\nStringGlobalVariable('gApprovalSubset');\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_application_attributes', 'pExecutionId', pExecutionId, 'pAppId', pAppId, 'pControl',  pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\ncApprovalDim = gApprovalDim;\r\ncApprovalSubset = gApprovalSubset;\r\n\r\nIf (DimensionExists(cApprovalDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n### Write taking ownership nodes \r\ncStateCube = cControlPrefix | 'tp_application_state}' | pAppId;\r\nIf (CubeExists(cStateCube) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncCurrentOwner = 'CurrentOwner';\r\ncTakeOwnershipNode = 'TakeOwnerShipNode';\r\n\r\ncApprovalDimSize = DIMSIZ(cApprovalDim);\r\nvIndex = 1;\r\nWhile (vIndex <= cApprovalDimSize);\r\n\tvNode = DIMNM(cApprovalDim, vIndex);\r\n\t\r\n\tvCurrentOwnerValue = CellGetS(cStateCube, vNode, cCurrentOwner);\r\n\tvTakeOwnershipNode = CellGetS(cStateCube, vNode, cTakeOwnershipNode);\r\n\tIf (vCurrentOwnerValue @<> '' & vTakeOwnershipNode @= '');\r\n\t\tIf (CellIsUpdateable(cStateCube, vNode, cTakeOwnershipNode) = 0);\r\n\t\t\tvDetail=INSRT(cTakeOwnershipNode,')',1);\r\n\t\t\tvDetail=INSRT(',',vDetail,1);\r\n\t\t\tvDetail=INSRT(vNode,vDetail,1);\r\n\t\t\tvDetail=INSRT('(',vDetail,1);\r\n\t\t\tvDetail=INSRT(cStateCube,vDetail,1);\r\n\t\t\tvReturnValue = ExecuteProcess('|tp_error_update_error_cube', \r\n\t\t\t'pGuid', pExecutionId, \r\n\t\t\t'pProcess', cTM1Process, \r\n\t\t\t'pErrorCode', 'TI_APPLICATION_NOT_UPDATEABLE',\r\n\t\t\t'pErrorDetails', vDetail,\r\n\t\t\t'pControl', pControl);\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\t\tCellPutS(vNode, cStateCube, vNode, cTakeOwnershipNode);\r\n\tEndIf;\r\n\t\r\n\tvIndex = vIndex + 1;\r\nEnd;\r\n\r\n### Create \"everyone\" group\r\n\r\ncSystemConfigDim = cControlPrefix | 'tp_system_config';\r\nIf (DimensionExists(cSystemConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncSecurityModeNode = 'IntegratedSecurityMode';\r\ncConfigValueAttr = 'ConfigValue';\r\nvSecurityMode = ATTRS(cSystemConfigDim, cSecurityModeNode, cConfigValueAttr);\r\n\r\ncCognosEveryoneGroup = 'CAMID(\"::Everyone\")';\r\ncTpEveryoneGroup = cControlPrefix | 'tp_Everyone';\r\nIf (vSecurityMode @= '5');\r\n\r\n\tIf (DIMIX('}Groups', cCognosEveryoneGroup) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tIf (DIMIX('}Groups', cTpEveryoneGroup) <> 0);\r\n\t\tDeleteGroup(cTpEveryoneGroup);\r\n\tEndIf;\r\n\t\r\n\tcEveryoneGroup = cCognosEveryoneGroup;\r\n\r\nElse;\r\n\r\n\tcEveryoneGroup = cTpEveryoneGroup;\r\n\t\r\n\tIf (DIMIX('}Groups', cEveryoneGroup) = 0);\r\n\t\tAddGroup(cEveryoneGroup);\r\n\tEndIf;\r\n\r\nEndIf;\r\n\r\n### Give everyone access to process: tp_workflow_submit_leaf_children\r\n\r\nsProcessesDim = '}Processes';\r\nsProcessSecurityCube = '}ProcessSecurity';\r\nIf (CubeExists(sProcessSecurityCube) = 0);\r\n\t\r\n\tCubeCreate(sProcessSecurityCube, sProcessesDim, '}Groups');\r\n\tCubeSetLogChanges(sProcessSecurityCube, 1);\r\nEndIf;\r\n\r\ncSubmitLeafChildrenProc = cControlPrefix | 'tp_workflow_submit_leaf_children';\r\nIf (DIMIX(sProcessesDim, cSubmitLeafChildrenProc) = 0);\r\n\tProcessError;\r\nElse;\r\n\tcCurrentCellValue = CellGetS(sProcessSecurityCube, cSubmitLeafChildrenProc, cEveryoneGroup); \r\n\tIf (cCurrentCellValue @= '' % cCurrentCellValue @= 'NONE');\r\n\t\tIf (CellIsUpdateable(sProcessSecurityCube, cSubmitLeafChildrenProc, cEveryoneGroup) = 0);\r\n\t\t\tvDetail=INSRT(cEveryoneGroup,')',1);\r\n\t\t\tvDetail=INSRT(',',vDetail,1);\r\n\t\t\tvDetail=INSRT(cSubmitLeafChildrenProc,vDetail,1);\r\n\t\t\tvDetail=INSRT('(',vDetail,1);\r\n\t\t\tvDetail=INSRT(sProcessSecurityCube,vDetail,1);\r\n\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t'pGuid', pExecutionId, \r\n\t\t\t'pProcess', cTM1Process, \r\n\t\t\t'pErrorCode', 'TI_SEMAPHORE_NOT_UPDATEABLE',\r\n\t\t\t'pErrorDetails', vDetail,\r\n\t\t\t'pControl', pControl);\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\t\tCellPutS('Read', sProcessSecurityCube, cSubmitLeafChildrenProc, cEveryoneGroup);\r\n\tEndIf;\r\nEndIf;\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pVersion",
+            "Prompt": "",
+            "Value": "9.5.2",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_upgrade_from_v9_5_1_to_v9_5_2"
+    }
+}

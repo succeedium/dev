@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_deploy_sort_shadow_hierarchy",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2013\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncShadowApprovalDim = '}tp_tasks}' | pAppId;\r\n\r\nIf (DimensionExists(pApprovalDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (SubsetExists(pApprovalDim, pApprovalSubset) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (DimensionExists(cShadowApprovalDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (SubsetExists(cShadowApprovalDim, pApprovalSubset) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncHierarchySize = SubsetGetSize(pApprovalDim, pApprovalSubset);\r\n\r\nIf (cHierarchySize = SubsetGetSize(cShadowApprovalDim, pApprovalSubset));\r\n\r\n\tisSame = 'T';\r\n\tvIndex = 1;\r\n\tWhile (vIndex <= cHierarchySize);\r\n\t\tvElement = SubsetGetElementName(pApprovalDim, pApprovalSubset, vIndex);\r\n\t\tvShadowElement = SubsetGetElementName(cShadowApprovalDim, pApprovalSubset, vIndex);\r\n\t\tIf (vElement @<> vShadowElement);\r\n\t\t\tisSame = 'F';\r\n\t\t\tvIndex = cHierarchySize;\r\n\t\tENdIf;\r\n\r\n\t\tvIndex = vIndex + 1;\r\n\tEnd;\r\n\r\n\tIf (isSame @= 'F');\r\n\t\tSubsetDeleteAllElements(cShadowApprovalDim, pApprovalSubset);\r\n\t\r\n\t\tvIndex = 1;\r\n\t\tWhile (vIndex <= cHierarchySize);\r\n\t\t\tvElement = SubsetGetElementName(pApprovalDim, pApprovalSubset, vIndex);\r\n\t\t\tIf (DIMIX(cShadowApprovalDim, vElement) <> 0);\r\n\t\t\t\tSubsetElementInsert(cShadowApprovalDim, pApprovalSubset, vElement, vIndex);\r\n\t\t\tElse;\r\n\t\t\t\tProcessError;\r\n\t\t\tEndIf;\r\n\t\t\r\n\t\t\tvIndex = vIndex + 1;\r\n\t\tEnd;\r\n\tEndIf;\r\n\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalDim",
+            "Prompt": "",
+            "Value": "TestElist",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalSubset",
+            "Prompt": "",
+            "Value": "TestElist",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_deploy_sort_shadow_hierarchy"
+    }
+}

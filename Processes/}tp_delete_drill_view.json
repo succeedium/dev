@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_delete_drill_view",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t'pProcess', cTM1Process, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'Parameters:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pExecutionId, pCube, pView, 'Y');\r\nEndIf;\r\n\r\ncDrillPrefix = 'DRILL.';\r\ncDrillPrefixLength = LONG(cDrillPrefix);\r\n\r\nIf (pCube @<> '' & CubeExists(pCube) <> 0);\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tIf (LONG(pView) >= cDrillPrefixLength & SUBST(pView, 1, cDrillPrefixLength) @= cDrillPrefix);\r\n\t\t\tTextOutput(cTM1Log, 'View has correct prefix:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, pView);\r\n\t\tElse;\r\n\t\t\tTextOutput(cTM1Log, 'View has wrong prefix:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), SUBST(pView, 1, cDrillPrefixLength), STR(cDrillPrefixLength, 3, 0));\r\n\t\tEndIf;\r\n\t\tIf (ViewExists(pCube, pView) <> 0);\r\n\t\t\tTextOutput(cTM1Log, 'View does exist:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, pView);\r\n\t\tElse;\r\n\t\t\tTextOutput(cTM1Log, 'View does not exist:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, pView);\r\n\t\tEndIf;\r\n\tEndIf;\r\n\tIf (LONG(pView) >= cDrillPrefixLength & SUBST(pView, 1, cDrillPrefixLength) @= cDrillPrefix & ViewExists(pCube, pView) <> 0);\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, 'Executing ViewDestroy:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, pView);\r\n\t\tEndIf;\r\n\t\tViewDestroy(pCube, pView);\r\n\t\tcSubsetName = pView;\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, 'Search Cube Dimensions for Subset:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, cSubsetName);\r\n\t\tEndIf;\r\n\t\tvDimIndex = 1;\r\n\t\tcDimName = TABDIM(pCube, vDimIndex);\r\n\t\tWhile ( cDimName @<> '' );\r\n\t\t\tIf (SubsetExists(cDimName, cSubsetName) = 1);\r\n\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\tTextOutput(cTM1Log, 'Subset exists, delete the subset:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, cDimName, cSubsetName);\r\n\t\t\t\tEndIf;\r\n\t\t\t\tSubsetDestroy(cDimName, cSubsetName);\r\n\t\t\tElse;\r\n\t\t\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\t\t\tTextOutput(cTM1Log, 'Subset does not exist:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, cDimName, cSubsetName);\r\n\t\t\t\tEndIf;\r\n\t\t\tEndIf;\r\n\t\t\tvDimIndex = vDimIndex + 1;\r\n\t\t\tcDimName = TABDIM(pCube, vDimIndex);\r\n\t\tEnd;\r\n\tElse;\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, 'View does not exist:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube, pView);\r\n\t\tEndIf;\r\n\tEndIf;\r\nElse;\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'Cube does not exist:', TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pCube);\r\n\tEndIf;\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pCube",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pView",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_delete_drill_view"
+    }
+}

@@ -1,0 +1,71 @@
+{
+    "Name": "}tp_error_update_error_cube",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#***\r\n\r\nvCube =cControlPrefix | 'tp_process_errors';\r\n\r\nIF ( CubeExists ( vCube ) = 0 );\r\n  ProcessError;\r\nENDIF;\r\n\r\n\r\n#*** add guid to the guid dimension\r\nExecuteProcess(cControlPrefix | 'tp_error_add_guid', 'pGUID', pGuid, 'pControl', pControl);\r\n\r\nCellPutS(TM1User, vCube, pGuid, 'UserName');\r\n\r\nIF (pProcess @<>'');\r\nCellPutS(pProcess, vCube, pGuid, 'SourceProcess');\r\nENDIF;\r\n\r\nIF ( pStartTime @<> '' );\r\n  CellPutS( pStartTime, vCube, pGuid, 'StartTime');\r\nENDIF;\r\n\r\nIF ( pEndTime @<> '' );\r\n  CellPutS( pEndTime, vCube, pGuid, 'EndTime');\r\nENDIF;\r\n\r\nvFileName= pProcess | '_' | pGuid | '_prolog.log';\r\nif (FileExists(vFileName)=1);\r\n  CellPutS( vFileName, vCube, pGuid, 'PrologFile');\r\nENDIF;\r\n\r\nvFileName= pProcess | '_' | pGuid | '_metadata.log';\r\nif (FileExists(vFileName)=1);\r\n  CellPutS( vFileName, vCube, pGuid, 'MetadataFile');\r\nENDIF;\r\n\r\nvFileName= pProcess | '_' | pGuid | '_data.log';\r\nif (FileExists(vFileName)=1);\r\n  CellPutS( vFileName, vCube, pGuid, 'DataFile');\r\nENDIF;\r\n\r\nvFileName= pProcess | '_' | pGuid | '_epilog.log';\r\nif (FileExists(vFileName)=1);\r\n  CellPutS( vFileName, vCube, pGuid, 'EpilogFile');\r\nENDIF;\r\n\r\nIF ( pErrorCode @<> '' );\r\n  CellPutS( pErrorCode, vCube, pGuid, 'ErrorCode');\r\nENDIF;\r\n\r\nIF ( pStatus @<> '' );\r\n  CellPutS( pStatus, vCube, pGuid, 'Status');\r\nENDIF;\r\n\r\nIF ( pClientStartTime @<> '' );\r\n  CellPutS( pClientStartTime, vCube, pGuid, 'ClientStartTime');\r\nENDIF;\r\n\r\nIF ( pErrorDetails @<> '' );\r\n  CellPutS( pErrorDetails, vCube, pGuid, 'ErrorDetails');\r\nENDIF;\r\n\r\nCubeSaveData(vCube);\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pGuid",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pProcess",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pStartTime",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pEndTime",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pErrorCode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pStatus",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pClientStartTime",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pErrorDetails",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_error_update_error_cube"
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "Name": "}tp_set_running_maintenance",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "cControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncServerMaintenanceRunning = 'ApplicationMaintenanceRunning';\r\nIf (pValue @= 'Y');\r\n\tvRunningMaintenanceMode = ATTRS(cConfigDim, cServerMaintenanceRunning, 'String Value');\r\n\tIf (vRunningMaintenanceMode @= 'Y');\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t'pProcess', 'tp_set_running_maintenance', \r\n\t\t\t\t'pErrorCode', 'TI_ATTR_ALREADY_SET',\r\n\t\t\t\t'pErrorDetails', 'ApplicationMaintenanceRunning',\r\n\t\t\t\t'pControl', pControl);\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndIf;\r\n\t\r\n\r\nAttrPutS(pValue, cConfigDim, cServerMaintenanceRunning, 'StringValue');\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pValue",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_set_running_maintenance"
+    }
+}

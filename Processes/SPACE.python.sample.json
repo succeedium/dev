@@ -1,0 +1,16 @@
+{
+    "Name": "SPACE.python.sample",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n## Call python scripts from TI process\r\n\r\nExecuteHttpRequest(\r\n  'GET',\r\n  'https://google.ca',\r\n  '-u admin:',\r\n  '-h Content-Type:application/json',\r\n  '-d { \"Rules\" : \"\" }',\r\n  '-k' );\r\n  \r\nstatus_code = HttpResponseGetStatusCode();\r\nLogOutput('INFO', 'SPACE python status code: '| status_code)\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "SPACE.python.sample"
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "Name": "}tp_util_update_node_in_subset",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n#<<set_log$'Y'$'Logs\\'>>\r\n\r\n### action=init_log:begin ###\r\n\r\na_pExecutionId = pExecutionId;\r\n\r\na_vLogPrefix = GetProcessName();\r\nIf (SUBST(a_vLogPrefix, 1, 1) @= '}');\r\n\ta_vLogPrefix = SUBST(a_vLogPrefix, 2, (LONG(a_vLogPrefix) - 1));\r\nEndIf;\r\n\r\n#*** Check tp_config dimension\r\na_cConfigDim = '}tp_config';\r\n\r\nIf (DimensionExists(a_cConfigDim) = 1);\r\n\tglobal_GenerateLog = ATTRS(a_cConfigDim, 'Generate TI Log', 'String Value');\r\n\ta_cLogDirectory = ATTRS(a_cConfigDim, 'Log Directory', 'String Value');\r\n\tIf (a_cLogDirectory @<> '' & SUBST(a_cLogDirectory, (LONG(a_cLogDirectory) - 1), 1) @<> '\\');\r\n\t\ta_cLogDirectory = a_cLogDirectory | '\\';\r\n\tEndIf;\r\n\t\r\n\tglobal_PrologLog = a_cLogDirectory | a_vLogPrefix | '_' | a_pExecutionId | '_prolog.log';\r\n\tglobal_EpilogLog = a_cLogDirectory | a_vLogPrefix | '_' | a_pExecutionId | '_epilog.log';\r\n\tglobal_DataLog = a_cLogDirectory | a_vLogPrefix | '_' | a_pExecutionId | '_data.log';\r\n\tglobal_MetadataLog = a_cLogDirectory | a_vLogPrefix | '_' | a_pExecutionId | '_metadata.log';\r\nElse;\r\n\tglobal_GenerateLog = 'Y';\r\n\tglobal_PrologLog = a_vLogPrefix | '_' | a_pExecutionId | '_prolog.log';\r\n\tglobal_EpilogLog = a_vLogPrefix | '_' | a_pExecutionId | '_epilog.log';\r\n\tglobal_DataLog = a_vLogPrefix | '_' | a_pExecutionId | '_data.log';\r\n\tglobal_MetadataLog = a_vLogPrefix | '_' | a_pExecutionId | '_metadata.log';\r\nEndIf;\r\n\r\n### action=init_log:end ###\r\n\r\n\r\nIf (DimensionExists(pDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nIf (SubsetExists(pDim, pSubset) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\nvPosition = StringToNumber(pPosition);\r\nvRealPosition = 0;\r\nvNode = '';\r\nIf (pNode @<> '');\r\n\r\n\tIf (DIMIX(pDim, pNode) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tcPrincipalNodeName = DimensionElementPrincipalName(pDim, pNode);\r\n\t\r\n### action=p_log:begin ###\r\n\r\nb_pMessage = 'Principal Name: ' | cPrincipalNodeName;\r\n\r\n\r\n### action=log:begin ###\r\n\r\nb_a_pSection = 'prolog';\r\nb_a_pMessage = b_pMessage;\r\n\r\nIf (global_GenerateLog @= 'Y');\r\n\tIf (b_a_pSection @= 'prolog');\r\n\t\tb_a_cTM1Log = global_PrologLog;\r\n\tElseIf (b_a_pSection @= 'epilog');\r\n\t\tb_a_cTM1Log = global_EpilogLog;\r\n\tElseIf (b_a_pSection @= 'data');\r\n\t\tb_a_cTM1Log = global_DataLog;\r\n\tElseIf (b_a_pSection @= 'metadata');\r\n\t\tb_a_cTM1Log = global_MetadataLog;\r\n\tElse;\r\n\t\tb_a_cTM1Log = b_a_pSection;\r\n\tEndIf;\r\n\t\r\n\tTextOutput(b_a_cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), b_a_pMessage);\r\nEndIf;\r\n\r\n### action=log:end ###\r\n\r\n\r\n### action=p_log:end ###\r\n\r\n\tcSubsetSize = SubsetGetSize(pDim, pSubset);\r\n\tvIndex = 1;\r\n\twhile(vIndex <= cSubsetSize);\r\n\t\tvElement = SubsetGetElementName(pDim, pSubset, vIndex);\r\n\t\t\r\n### action=p_log:begin ###\r\n\r\nc_pMessage = 'vElement: ' | vElement;\r\n\r\n\r\n### action=log:begin ###\r\n\r\nc_a_pSection = 'prolog';\r\nc_a_pMessage = c_pMessage;\r\n\r\nIf (global_GenerateLog @= 'Y');\r\n\tIf (c_a_pSection @= 'prolog');\r\n\t\tc_a_cTM1Log = global_PrologLog;\r\n\tElseIf (c_a_pSection @= 'epilog');\r\n\t\tc_a_cTM1Log = global_EpilogLog;\r\n\tElseIf (c_a_pSection @= 'data');\r\n\t\tc_a_cTM1Log = global_DataLog;\r\n\tElseIf (c_a_pSection @= 'metadata');\r\n\t\tc_a_cTM1Log = global_MetadataLog;\r\n\tElse;\r\n\t\tc_a_cTM1Log = c_a_pSection;\r\n\tEndIf;\r\n\t\r\n\tTextOutput(c_a_cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), c_a_pMessage);\r\nEndIf;\r\n\r\n### action=log:end ###\r\n\r\n\r\n### action=p_log:end ###\r\n\r\n\t\tIf (cPrincipalNodeName @= vElement);\r\n\t\t\tvRealPosition = vIndex;\r\n\t\t\tvIndex = cSubsetSize;\r\n\t\tEndIf;\r\n\t\r\n\t\tvIndex = vIndex + 1;\r\n\tEnd;\r\n\r\n\tvNode = pNode;\r\n\r\nElse;\r\n\r\n\tIf (pAdd @= 'Y');\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tIf (vPosition <= 0 % vPosition >= SubsetGetSize(pDim, pSubset));\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tvNode = SubsetGetElementName(pDim, pSubset, vPosition);\r\n\r\nEndIf;\r\n\r\n\r\nIf (pAdd @= 'Y');\r\n\r\n\tIf (vRealPosition = 0);\r\n\r\n\t\tIf (vPosition = 0);\r\n\t\t\tvPosition = SubsetGetSize(pDim, pSubset) + 1;\r\n\t\tEndIf;\r\n\r\n\t\tIf (vPosition <= 0 % vPosition > SubsetGetSize(pDim, pSubset) + 1);\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\r\n\t\tSubsetElementInsert(pDim, pSubset, vNode, vPosition);\r\n\t\t\r\n### action=p_log:begin ###\r\n\r\nd_pMessage = 'Only Insert';\r\n\r\n\r\n### action=log:begin ###\r\n\r\nd_a_pSection = 'prolog';\r\nd_a_pMessage = d_pMessage;\r\n\r\nIf (global_GenerateLog @= 'Y');\r\n\tIf (d_a_pSection @= 'prolog');\r\n\t\td_a_cTM1Log = global_PrologLog;\r\n\tElseIf (d_a_pSection @= 'epilog');\r\n\t\td_a_cTM1Log = global_EpilogLog;\r\n\tElseIf (d_a_pSection @= 'data');\r\n\t\td_a_cTM1Log = global_DataLog;\r\n\tElseIf (d_a_pSection @= 'metadata');\r\n\t\td_a_cTM1Log = global_MetadataLog;\r\n\tElse;\r\n\t\td_a_cTM1Log = d_a_pSection;\r\n\tEndIf;\r\n\t\r\n\tTextOutput(d_a_cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), d_a_pMessage);\r\nEndIf;\r\n\r\n### action=log:end ###\r\n\r\n\r\n### action=p_log:end ###\r\n\r\n\tElse;\r\n\t\tIf (vPosition <> vRealPosition);\r\n\t\t\tSubsetElementDelete(pDim, pSubset, vRealPosition);\r\n\t\t\tSubsetElementInsert(pDim, pSubset, vNode, vPosition);\r\n\t\t\t\r\n### action=p_log:begin ###\r\n\r\nf_pMessage = 'Delete and Insert';\r\n\r\n\r\n### action=log:begin ###\r\n\r\nf_a_pSection = 'prolog';\r\nf_a_pMessage = f_pMessage;\r\n\r\nIf (global_GenerateLog @= 'Y');\r\n\tIf (f_a_pSection @= 'prolog');\r\n\t\tf_a_cTM1Log = global_PrologLog;\r\n\tElseIf (f_a_pSection @= 'epilog');\r\n\t\tf_a_cTM1Log = global_EpilogLog;\r\n\tElseIf (f_a_pSection @= 'data');\r\n\t\tf_a_cTM1Log = global_DataLog;\r\n\tElseIf (f_a_pSection @= 'metadata');\r\n\t\tf_a_cTM1Log = global_MetadataLog;\r\n\tElse;\r\n\t\tf_a_cTM1Log = f_a_pSection;\r\n\tEndIf;\r\n\t\r\n\tTextOutput(f_a_cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), f_a_pMessage);\r\nEndIf;\r\n\r\n### action=log:end ###\r\n\r\n\r\n### action=p_log:end ###\r\n\r\n\t\tEndIf;\r\n\r\n\tEndIf;\r\n\r\nElse;\r\n\r\n\tIf (vRealPosition > 0);\r\n\t\tSubsetElementDelete(pDim, pSubset, vRealPosition);\r\n\tElse;\r\n\t\tIf (vNode @<> '');\r\n\t\t\tSubsetElementDelete(pDim, pSubset, vIndex);\r\n\t\tEndIf;\r\n\tEndIf;\r\n\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pPosition",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pAdd",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_update_node_in_subset"
+    }
+}

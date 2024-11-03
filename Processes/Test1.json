@@ -1,0 +1,19 @@
+{
+    "Name": "Test1",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n#assas",
+    "DataSource": {
+        "Type": "TM1CubeView",
+        "dataSourceNameForClient": "test",
+        "dataSourceNameForServer": "test",
+        "view": "All"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "Test1"
+    }
+}

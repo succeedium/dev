@@ -1,0 +1,29 @@
+{
+    "Name": "}tp_clean_owner_groups",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n# This script deletes all owner groups created for a particular\r\n# approval dimension, or absolutely all owner groups if an empty\r\n# pApprovalDim parameter is supplied. \r\n# Since only one boxboro application\r\n# can use a particular approval dimension at a time, this\r\n# process deletes all owner groups associated with the \r\n# approval dimension without regard to particular subsets.\r\n\r\n\r\n\r\n# SETUP PROCESS\r\n\r\n\t#*** Constants\r\n\r\n\tcControlPrefix = '}';\r\n\tcTM1Process = GetProcessName();\r\n\tcApprovalDim = pApprovalDim;\r\n\tcGroupsDim = '}Groups';\r\n\tpControl = 'Y';\r\n\t\r\n\t\r\n\t#*** Configure logging\t\r\n\r\n\t# Get log file name\r\n\tStringGlobalVariable('gPrologLog');\r\n\tvReturnValue = ExecuteProcess(\r\n\t\t\tcControlPrefix | 'tp_get_log_file_names',\r\n\t\t\t'pExecutionId', pExecutionId, \r\n\t\t\t'pProcess', cTM1Process, \r\n\t\t\t'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\tcTM1Log = gPrologLog;\r\n\t\r\n\t# Retrieve flag for generating logs\r\n\tcConfigDim = cControlPrefix | 'tp_config';\r\n\tIf (DimensionExists(cConfigDim) = 1);\r\n\t\tcGenerateLog = ATTRS(cControlPrefix | 'tp_config', 'Generate TI Log', 'String Value');\r\n\tElse;\r\n\t\tcGenerateLog = 'N';\r\n\tEndIf;\r\n\t\t\r\n\r\n\t#*** Log parameters\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), \r\n\t\t\t\t'Parameters:', pExecutionId, pApprovalDim);\r\n\tEndIf;\r\n\r\n# DELETE OWNER GROUPS\r\n\t# Go through the list of groups in reverse order looking for\r\n\t# owner groups - all owner groups if no pApprovalDim is supplied,\r\n\t# or only owner groups with pApprovalDim as part of their\r\n\t# prefix otherwise.\t\r\n\r\n\t# Determine the prefix used to identified owner groups to delete\r\n\tIf (cApprovalDim @= '');\r\n\t\t# we have been asked to remove all owner groups regardless of approval hierarchy\r\n\t\tcOwnerGroupPrefix = cControlPrefix | 'tp_owner_';\r\n\tElse;\r\n\t\tcOwnerGroupPrefix = cControlPrefix | 'tp_owner_' | cApprovalDim | '_';\r\n\tEndIf;\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log,  TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), \r\n\t\t\t\t'will delete all groups with prefix', cOwnerGroupPrefix);\r\n\tEndIf;\r\n\r\n\t# Loop through all groups in reverse order so we can delete as we go\r\n\tcGroupsDimSize = DIMSIZ(cGroupsDim);\r\n\tvIndex = cGroupsDimSize;\r\n\tvDeletedCount = 0;\r\n\tWhile (vIndex >= 1);\r\n\t\tvGroupName = DIMNM(cGroupsDim, vIndex);\r\n\r\n\t\tIf (SCAN(cOwnerGroupPrefix, vGroupName) = 1);\r\n\t\t\tIf (cGenerateLog @='Y');\r\n\t\t\t\tTextOutput(cTM1Log,  TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), \r\n\t\t\t\t\t\t'identified group to delete', vGroupName);\r\n\t\t\tEndIf;\r\n\t\t\tDeleteGroup(vGroupName);\r\n\t\t\tvDeletedCount = vDeletedCount +1;\r\n\t\tEndIf;\r\n\r\n\t\tvIndex = vIndex - 1;\r\n\tEnd;\r\n\t\t\r\n\t# Note how many groups were actually deleted\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, 'number of groups deleted', NumberToString(vDeletedCount));\r\n\tEndIf;\r\n\r\n\r\n\r\n\r\n# FINISH PROCESS\r\n\r\n\t#*** Log successful completion\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\n\tEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pApprovalDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_clean_owner_groups"
+    }
+}

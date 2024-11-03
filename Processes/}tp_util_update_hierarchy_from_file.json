@@ -1,0 +1,91 @@
+{
+    "Name": "}tp_util_update_hierarchy_from_file",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '}';\r\n\r\n#*** Log File Name\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names',\r\n'pExecutionId', pExecutionId, 'pProcess', cTM1Process, 'pControl', 'Y');\r\n\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\n\r\ncTM1Log = cPrologLog;\r\n\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cControlPrefix | 'tp_config', 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\t\t\t\tpExecutionId, pSourceFile);\r\nEndIf;\r\n\r\n#*** Set local variables\r\nDataSourceType = 'CHARACTERDELIMITED';\r\nDatasourceASCIIDelimiter = CHAR(StringToNumber(pDelimiter));\r\nDatasourceASCIIQuoteCharacter = char(0);\r\nDatasourceASCIIHeaderRecords = 0;\r\nDatasourceNameForServer = pSourceFile;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, 'DataSourceType: ' | DataSourceType);\r\n\tTextOutput(cTM1Log, 'DatasourceASCIIDelimiter: ' | DatasourceASCIIDelimiter);\r\n\tTextOutput(cTM1Log, 'DatasourceASCIIHeaderRecords: ' | NumberToString(DatasourceASCIIHeaderRecords));\r\n\tTextOutput(cTM1Log, 'DatasourceNameForServer: ' | DatasourceNameForServer);\r\nEndIf;\r\n\r\n#*** Set input file encoding as UTF-8\r\n\r\nSetInputCharacterSet('TM1CS_UTF8');\r\n\r\n#*** Check file\r\n\r\nIf (FileExists(pSourceFile) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Check dimension\r\n\r\nIf (DimensionExists(pDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Check subset\r\n\r\ncSubsetSize = 0;\r\nIf (pSubset @<> '');\r\n\tIf (SubsetExists(pDim, pSubset) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tcSubsetSize = SubsetGetSize(pDim, pSubset);\r\nEndIf;\r\n\r\n#***\r\nvWeight = 1;\r\ncAppId = SUBST(pDim, 11, LONG(pDim) -10);\r\ncApprovalDim = ATTRS('}tp_applications',cAppId,  'ApprovalDimension');\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\nIF (varParent @<> '' & varNode @<>'');\r\n\tIF (DIMIX(cApprovalDim, varParent) >0 & DIMIX (cApprovalDim, varNode) >0 & ELISPAR(cApprovalDim, varParent, varNode) =1);\r\n\t\tvWeight = ElementWeight(cApprovalDim, cApprovalDim, varParent, varNode);\r\n\tEndif;\r\nEndif;\r\n\r\nvReturnValue = ExecuteProcess('}tp_util_update_hierarchy', \r\n'pExecutionId', pExecutionId, 'pDim', pDim, 'pSubset', pSubset,\r\n'pParent', varParent, 'pNode', varNode, 'pNodeType', varNodeType, 'pWeight', NumberToString(vWeight), 'pAction', varAction);\r\n\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncTM1Log = cEpilogLog;\r\n\r\n#*** Sort order\r\n\r\nStringGlobalVariable('gTopNode');\r\nvReturnValue = ExecuteProcess('}tp_get_top_node', 'pExecutionId', pExecutionId,'pDim', pDim, 'pSubset', pSubset, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\n\r\nSubsetDeleteAllElements(pDim, pSubset);\r\nSubsetElementInsert(pDim, pSubset, gTopNode, 0);\r\nvTotalChildren = ELCOMPN(pDim, gTopNode);\r\nIf (vTotalChildren >= 1);\r\n\tvReturnValue = ExecuteProcess('}tp_util_add_direct_children_to_subset', \r\n\t\t'pExecutionId', pExecutionId,'pDim', pDim,\r\n\t\t'pSubset', pSubset, 'pParent', gTopNode);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\t\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "DataSource": {
+        "Type": "ASCII",
+        "asciiDecimalSeparator": ".",
+        "asciiDelimiterChar": ",",
+        "asciiDelimiterType": "Character",
+        "asciiHeaderRecords": 0,
+        "asciiQuoteCharacter": "\"",
+        "asciiThousandSeparator": ",",
+        "dataSourceNameForClient": "dummy.txt",
+        "dataSourceNameForServer": "dummy.txt"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pSourceFile",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDelimiter",
+            "Prompt": "",
+            "Value": "9",
+            "Type": "String"
+        }
+    ],
+    "Variables": [
+        {
+            "Name": "varAction",
+            "Type": "String",
+            "Position": 1,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varParent",
+            "Type": "String",
+            "Position": 2,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varNode",
+            "Type": "String",
+            "Position": 3,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varNodeType",
+            "Type": "String",
+            "Position": 4,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "varWeight",
+            "Type": "String",
+            "Position": 5,
+            "StartByte": 0,
+            "EndByte": 0
+        }
+    ],
+    "Attributes": {
+        "Caption": "}tp_util_update_hierarchy_from_file"
+    }
+}

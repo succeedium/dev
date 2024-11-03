@@ -1,0 +1,47 @@
+{
+    "Name": "}tp_custom_TI_update_error_code_caption",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '}';\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pErrorCode, pLocaleName, pLocaleValue);\r\nEndIf;\r\n\r\n#***\r\nvErrorDim = '}tp_process_errors_localization';\r\nvAttrCube = '}ElementAttributes_' | vErrorDim;\r\nvAttrDim = vAttrCube;\r\n\r\nIF (DIMIX(vErrorDim, pErrorCode) >0);\r\n\tIF (DIMIX(vAttrDim, 'Caption') =0);\r\n\t\tAttrInsert(vErrorDim, '', 'Caption', 'A');\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Alias Caption is added.');\r\n\t\tEndIf;\r\n\tEndif;\r\n\r\n\tIF (DIMIX(vAttrDim, 'CaptionDefaultLocale') =0);\r\n\t\tAttrInsert(vErrorDim, '', 'CaptionDefaultLocale', 'S');\r\n\t\tIf (cGenerateLog @= 'Y');\r\n\t\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'String Attribute CaptionDefaultLocale is added.');\r\n\t\tEndIf;\r\n\tEndif;\r\n\r\nElse;\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube',\r\n\t\t'pGuid', pExecutionId,\r\n\t\t'pProcess', cTM1Process,\r\n\t\t'pErrorCode', 'TI_NODE_NOT_EXIST',\r\n\t\t'pErrorDetails', vErrorDim | ', ' | pErrorCode,\r\n\t\t'pControl', 'Y');\r\n\r\nEndif;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n#***\r\ncTM1Log = cEpilogLog;\r\n\r\n#Set caption support\r\ncCultureDim = '}Cultures';\r\nIF (DIMIX(cCultureDim, pLocaleName)>0);\r\n\tIF (pIsDefault @= 'Y');\r\n\t\t#set default caption\r\n\t\tAttrPutS(pLocaleValue, vErrorDim ,pErrorCode , 'Caption');\r\n\t\tAttrPutS(pLocaleName, vErrorDim ,pErrorCode , 'CaptionDefaultLocale');\r\n\tEndif;\r\n\tAttrPutS(pLocaleValue, vErrorDim ,pErrorCode , 'Caption', pLocaleName);\r\nEndif;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'The end has been reached.');\r\nEndIf;\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pErrorCode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pLocaleName",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pLocaleValue",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pIsDefault",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_custom_TI_update_error_code_caption"
+    }
+}

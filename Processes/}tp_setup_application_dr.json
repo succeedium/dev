@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_setup_application_dr",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', pControl);\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Parameters:', \r\npExecutionId, pAppId, pEnable, pControl);\r\nEndIf;\r\n\r\n#***\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, 'Check application id', pAppId);\r\nEndIf;\r\n\r\ncApplicationsDim = cControlPrefix | 'tp_applications';\r\nIf (DIMIX(cApplicationsDim, pAppId) = 0);\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n'pGuid', pExecutionId, \r\n'pProcess', cTM1Process, \r\n'pErrorCode', 'TI_NODE_NOT_EXIST',\r\n'pErrorDetails', cApplicationsDim | ', ' | pAppId,\r\n'pControl', pControl);\r\n\r\nProcessError;\r\nEndIf;\r\n\r\n#Set '}CubeProperties' data reservation flag\r\ncApprovalDIM = ATTRS(cControlPrefix | 'tp_applications', pAppId, 'ApprovalDimension');\r\n\r\ncApplicationCubesCube = cControlPrefix | 'tp_application_cubes';\r\n\r\ntotalCubes = DIMSIZ('}Cubes');\r\nindexCube = totalCubes;\r\ncCubePropertiesCube = '}CubeProperties';\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tcLogCubeText = 'Reserve cube number cubes to check' | NumberToString(totalCubes);\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), cLogCubeText);\r\nEndIf;\r\n\r\n#clear existing cube flags in case this is a redeployment\r\nWhile (indexCube >= 1);\r\n\tcCubeName = DIMNM('}Cubes', indexCube);\r\n\r\n\tcIsAppCube = CellGetS(cApplicationCubesCube, pAppId, cCubeName);\r\n\r\n\tIf ((cApprovalDIM @= '' & cIsAppCube @= 'Y') % cIsAppCube @= 'A');\r\n\r\n\t\t#Decide the final DR mode on this cube\r\n\t\tvAppLooper = 1;\r\n\t\tvIsOtherAppCube = '';\r\n\t\tvAppDimension = '}tp_applications';\r\n\t\tvTotalApps = DIMSIZ(vAppDimension);\r\n\t\tvNewDRMode = '';\r\n\t\tWhile (vAppLooper <= vTotalApps);\r\n\t\t\tvOtherAppId = DIMNM(vAppDimension, vAppLooper);\r\n\t\t\tvIsOtherAppCube = CellGetS(cApplicationCubesCube, vOtherAppId, cCubeName);\r\n\t\t\tvOtherAppActive = ATTRS(cControlPrefix | 'tp_applications', vOtherAppId, 'IsActive'); \r\n\t\t\tvOtherAppApprovalDim = ATTRS(cControlPrefix | 'tp_applications', vOtherAppId, 'ApprovalDimension'); \r\n\t\t\tIF (vIsOtherAppCube @= 'A' );\r\n\t\t\t\tIF (vOtherAppActive @= 'Y');\r\n\t\t\t\t\tvNewDRMode = ' REQUIREDSHARED';\r\n\t\t\t\tEndif;\r\n \t\t\tElseif (vIsOtherAppCube @='Y' & vOtherAppApprovalDim @='');\r\n\t\t\t\tIF (vOtherAppActive @= 'Y');\r\n\t\t\t\t\tvNewDRMode =  'ALLOWED';\r\n\t\t\t\tEndif;\r\n\t\t\tEndif;\r\n\r\n\t\t\tvAppLooper = vAppLooper +1;\r\n\t\tEnd;\r\n\t\tCellPutS(vNewDRMode, cCubePropertiesCube, cCubeName, 'DATARESERVATIONMODE');\r\n\r\n\tEndIf;\r\n\t\r\n\tindexCube = indexCube - 1;\r\nEnd;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pEnable",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_setup_application_dr"
+    }
+}

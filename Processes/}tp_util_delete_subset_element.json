@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_util_delete_subset_element",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\nvSubsetSize = SubsetGetSize(pDim, pSubset);\r\nIf (vSubsetSize = 1);\r\n\tSubsetElementDelete(pDim, pSubset, 1);\r\nElseIf (vSubsetSize > 1);\r\n\tvNodeIndex = 0;\r\n\tvTempIndex = 1;\r\n\twhile(vTempIndex <= vSubsetSize);\r\n\t\tvTempNode = SubsetGetElementName(pDim, pSubset, vTempIndex);\r\n\t\tIf (DimensionElementPrincipalName(pDim, pNode) @= \r\n\t\t\tDimensionElementPrincipalName(pDim, vTempNode));\r\n\t\t\tvNodeIndex = vTempIndex;\r\n\t\t\tvTempIndex = vSubsetSize;\r\n\t\tEndIf;\r\n\r\n\t\tvTempIndex = vTempIndex + 1;\r\n\tEnd;\r\n\r\n\tIf (vNodeIndex > 0);\r\n\t\tSubsetElementDelete(pDim, pSubset, vNodeIndex);\r\n\tEndIf;\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_delete_subset_element"
+    }
+}

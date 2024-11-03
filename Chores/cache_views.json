@@ -1,0 +1,11 @@
+{
+    "Name": "cache_views",
+    "StartTime": "2012-02-07T02:37:14Z",
+    "DSTSensitive": false,
+    "Active": false,
+    "ExecutionMode": "SingleCommit",
+    "Frequency": "P0DT00H00M00S",
+    "Attributes": {
+        "Caption": "cache_views"
+    }
+}

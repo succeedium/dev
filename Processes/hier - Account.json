@@ -1,0 +1,16 @@
+{
+    "Name": "hier - Account",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\nDatasourceType  = 'CHARACTERDELIMITED';\r\n\r\n#Just a small comment\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "hier - Account"
+    }
+}

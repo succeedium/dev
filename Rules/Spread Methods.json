@@ -1,0 +1,4 @@
+{
+    "Name": "Spread Methods",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\nUNDEFVALS;\n#EndRegion\n\nFEEDERS;"
+}

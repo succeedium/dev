@@ -1,0 +1,23 @@
+{
+    "Name": "}tp_error_setup",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#***Create error cube and dimensions\r\nvCube=cControlPrefix | 'tp_process_errors';\r\nvGuidDim =cControlPrefix |  'tp_process_guids';\r\nvMeasureDim =cControlPrefix | 'tp_process_error_measures';\r\n\r\nif (CubeExists(vCube)=1);\r\nCubeDestroy(vCube);\r\nendif;\r\n\r\nif (DimensionExists(vGuidDim) = 1);\r\nDimensionDestroy(vGuidDim);\r\nendif;\r\n\r\nif (DimensionExists(vMeasureDim)=1);\r\nDimensionDestroy(vMeasureDim);\r\nendif;\r\n\r\nDimensionCreate(vGuidDim);\r\nDimensionCreate(vMeasureDim);\r\n\r\n#add meatures to error measure dimension\r\nDimensionElementInsert(vMeasureDim, '', 'UserName','S');\r\nDimensionElementInsert(vMeasureDim, '', 'SourceProcess','S');\r\nDimensionElementInsert(vMeasureDim, '', 'Status','S');\r\nDimensionElementInsert(vMeasureDim, '', 'StartTime','S');\r\nDimensionElementInsert(vMeasureDim, '', 'ClientStartTime','S');\r\nDimensionElementInsert(vMeasureDim, '', 'EndTime','S');\r\nDimensionElementInsert(vMeasureDim, '', 'PrologFile','S');\r\nDimensionElementInsert(vMeasureDim, '', 'MetadataFile','S');\r\nDimensionElementInsert(vMeasureDim, '', 'DataFile','S');\r\nDimensionElementInsert(vMeasureDim, '', 'EpilogFile','S');\r\nDimensionElementInsert(vMeasureDim, '', 'ErrorCode','S');\r\nDimensionElementInsert(vMeasureDim, '', 'ErrorDetails','S');\r\n\r\nDimensionElementInsert(vGuidDim, '', 'All', 'S');\r\nCubeCreate(vCube, vGuidDim, vMeasureDim);\r\nCubeSetLogChanges(vCube, 1);\r\n\r\n#***Update tp_config dimension\r\n\r\n#***Create tp_cofig dimension if it doesn't exist\r\nvConfigDim =cControlPrefix | 'tp_config';\r\nif (DimensionExists(vConfigDim)=0);\r\nDimensionCreate(vConfigDim);\r\nAttrInsert(vConfigDim, '', 'Numeric Value', 'N');\r\nAttrInsert(vConfigDim, '', 'String Value', 'S');\r\nendif;\r\n\r\n#***add attribute to set number of days that errors expire\r\nvElem = 'TI Message Expiration (Days)';\r\nif (DIMIX(vConfigDim, vElem) = 0);\r\nDimensionElementInsert(vConfigDim, '', vElem, 'S');\r\nendif;\r\n\r\n#***add attribute: whether we will generate log file or not\r\nvElem = 'Generate TI Log';\r\nif (DIMIX(vConfigDim, vElem) = 0);\r\nDimensionElementInsert(vConfigDim, '', vElem, 'S');\r\nendif;\r\n\r\n#***set log directory\r\nvElem = 'Log Directory';\r\nif (DIMIX(vConfigDim, vElem) = 0);\r\nDimensionElementInsert(vConfigDim, '', vElem, 'S');\r\nendif;\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n#***Set initial default value for \"errors expiration days\"\r\nvElem = 'TI Message Expiration (Days)';\r\nif (DIMIX(vConfigDim, vElem) = 1);\r\nAttrPutN(3, vConfigDim, vElem, 'NumericValue');\r\nendif;\r\n\r\n#***Set initial default value for \"Generate TI Log\"\r\nvElem = 'Generate TI Log';\r\nif (DIMIX(vConfigDim, vElem) = 1);\r\nAttrPutS('Y', vConfigDim, vElem, 'StringValue');\r\nendif;\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_error_setup"
+    }
+}

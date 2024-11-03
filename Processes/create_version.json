@@ -1,0 +1,29 @@
+{
+    "Name": "create_version",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\nIF(pNewVersion @='');\r\n  ProcessError;\r\nENDIF;\r\n\r\nDimensionElementInsert('Version','',pNewVersion,'N');\r\n\r\n",
+    "MetadataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n",
+    "DataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n",
+    "EpilogProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\nVersionType='';\r\n\r\nIF( pLinkToDrivers@='Y');\r\n  VersionType= 'B';\r\n  AttrPuts(VersionType, 'Version',pNewVersion, 'Version Type');\r\n  AttrPuts(pNewVersion, 'Version',pNewVersion, 'LinkVersion');\r\n#ASCIIOUTPUT('C:\\guy.txt',pNewVersion);\r\nENDIF;\r\n  AttrPutn(1, 'Version',pNewVersion, 'VarianceFactor');\r\n\r\nAttrPuts('b:#,##0;(#,##0)\fCO|0|Y', 'Version',pNewVersion, 'Format');\r\n\r\n\r\nExecuteProcess('Set_Default_Version','pDefaultVersion',pNewVersion);\r\n\r\nExecuteProcess('create_default_subset','pSubsetName','Current');\r\n\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pNewVersion",
+            "Prompt": "New Version",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pLinkToDrivers",
+            "Prompt": "Link to Drivers ?",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "create_version"
+    }
+}

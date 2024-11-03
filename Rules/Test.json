@@ -1,0 +1,4 @@
+{
+    "Name": "Test",
+    "Rules": "['Product Total']=C: 0;['Phones']=C: 0;"
+}

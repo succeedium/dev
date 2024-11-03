@@ -1,0 +1,35 @@
+{
+    "Name": "Add_Product",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\npParent=DimensionElementPrincipalName('Product',pParent);\r\n\r\n\r\nDimensionElementInsert('Product','',pNewNumber,'N');\r\n\r\nDimensionElementComponentAdd('Product',pParent,pNewNumber,1);\r\n\r\n###Check for Required Subsets###\r\n\r\nIF(SubsetExists('Product', 'Group D Products')=0);\r\nSubsetCreate('Product', 'Group D Products');\r\nENDIF;\r\n\r\nIF(SubsetExists('Product', 'New')=0);\r\nSubsetCreate('Product', 'New');\r\nENDIF;\r\n\r\nIF(SubsetExists('Product', 'Compare')=0);\r\nSubsetCreate('Product', 'Compare');\r\nENDIF;\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "DataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "EpilogProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\n\r\nAttrPutS(pNewName, 'Product',pNewNumber,'Caption_Default');\r\nAttrPutS('Y','Product',pNewNumber,'NewProduct');\r\n\r\n\r\nIF(SubsetGetSize('Product','New')>0);\r\nSubsetDeleteAllElements('Product','New');\r\nENDIF;\r\nSubsetElementInsert('Product','New',pNewNumber,1);\r\n\r\n\r\n###Update Price and Cost Assumptions###\r\nExecuteProcess('Copy_RevAsmpt','pParent',pParent,'pNewNumber',pNewNumber);\r\n\r\npFromSKU=SubsetGetElementName('Product', 'Compare', 1);\r\n\r\nExecuteProcess('Copy_SKU_detail_BOM','pFromSKU',pFromSKU,'pToSKU',pNewNumber);\r\nExecuteProcess('Copy_Product_SupplyChain','pCopyFrom',pFromSKU,'pCopyTo',pNewNumber);\r\n\r\n###Update Subsets###\r\n\r\nProdSize=DimSiz('Product');\r\nIF(SubsetGetSize('Product','Gaming')>0);\r\nSubsetDeleteAllElements('Product','Gaming');\r\nENDIF;\r\nSubsetElementInsert('Product','Gaming','Gaming',1);\r\nn=1;\r\nWhile(n<=ProdSize);\r\nCurrent=DIMNM('Product',n);\r\nIF(ELISANC('Product','Gaming',Current)=1);\r\nSubsetElementInsert('Product','Gaming',Current,0);\r\nENDIF;\r\nn=n+1;\r\nEND;\r\n\r\nProdSize=DimSiz('Product');\r\nIF(SubsetGetSize('Product','Phones')>0);\r\nSubsetDeleteAllElements('Product','Phones');\r\nENDIF;\r\nSubsetElementInsert('Product','Phones','Phones',1);\r\nn=1;\r\nWhile(n<=ProdSize);\r\nCurrent=DIMNM('Product',n);\r\nIF(ELISANC('Product','Phones',Current)=1);\r\nSubsetElementInsert('Product','Phones',Current,0);\r\nENDIF;\r\nn=n+1;\r\nEND;\r\n\r\nProdSize=DimSiz('Product');\r\nIF(SubsetGetSize('Product','Tablets')>0);\r\nSubsetDeleteAllElements('Product','Tablets');\r\nENDIF;\r\nSubsetElementInsert('Product','Tablets','Tablets',1);\r\nn=1;\r\nWhile(n<=ProdSize);\r\nCurrent=DIMNM('Product',n);\r\nIF(ELISANC('Product','Tablets',Current)=1);\r\nSubsetElementInsert('Product','Tablets',Current,0);\r\nENDIF;\r\nn=n+1;\r\nEND;\r\n\r\n\r\n\r\n\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pParent",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pNewNumber",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pNewName",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "Add_Product"
+    }
+}

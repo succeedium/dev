@@ -1,0 +1,59 @@
+{
+    "Name": "}tp_job_start",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t'pProcess', cTM1Process, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndIf;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:',\r\n\tpExecutionId, pJobId, pAppId, pAppName, pJobType, pTime, pControl);\r\nEndIf;\r\n\r\n#*** Insert the job element\r\ncJobsDim = cControlPrefix | 'tp_jobs';\r\nIf (DIMIX(cJobsDim, pJobId) = 0);\r\n\r\n\tIf (cGenerateLog @= 'Y');\r\n\t\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Insert current job id');\r\n\tEndIf;\r\n\r\n\tDimensionElementInsert(cJobsDim, '', pJobId, 'S');\r\n\r\nEndIf;\r\n\r\ncDisplayUserName = ATTRS('}Clients', TM1User, '}TM1_DefaultDisplayValue');\r\nIf (cDisplayUserName @= '');\r\n\tcDisplayUserName = TM1User;\r\nEndIf;\r\n\r\ncJobCube = cControlPrefix | 'tp_application_jobs';\r\nIf (CubeExists(cJobCube) = 0);\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t'pGuid', pExecutionId, \r\n\t\t'pProcess', cTM1Process, \r\n\t\t'pErrorCode', 'TI_CUBE_NOT_EXIST',\r\n\t\t'pErrorDetails', cJobCube,\r\n\t\t'pControl', pControl);\r\n\t\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n#*** Set values\r\ncJobAppId = 'ApplicationId';\r\ncJobAppName = 'ApplicationName';\r\ncJobType = 'JobType';\r\ncJobOwner = 'Owner';\r\ncJobOwnerId = 'OwnerId';\r\ncJobStartDate = 'StartDate';\r\n\r\nCellPutS(pAppId, cJobCube, pJobId, cJobAppId);\r\nCellPutS(pAppName, cJobCube, pJobId, cJobAppName);\r\nCellPutS(pJobType, cJobCube, pJobId, cJobType);\r\nCellPutS(cDisplayUserName, cJobCube, pJobId, cJobOwner);\r\nCellPutS(TM1User, cJobCube, pJobId, cJobOwnerId);\r\nCellPutS(pTime, cJobCube, pJobId, cJobStartDate);\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pJobId",
+            "Prompt": "",
+            "Value": "MyJob",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppName",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pJobType",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pTime",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_job_start"
+    }
+}

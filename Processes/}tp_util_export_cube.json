@@ -1,0 +1,59 @@
+{
+    "Name": "}tp_util_export_cube",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\nDatasourceASCIIDelimiter = char(StringToNumber(pDelimiter));\r\nDatasourceASCIIQuoteCharacter = char(StringToNumber(pQuote));\r\nSetOutputCharacterSet(pBlob | '.blb', 'TM1CS_UTF8');\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t\t\t\t\t\t\t\t\t'pProcess', cTM1Process, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndIf;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters: ', pExecutionId, pCube, pBlob, pControl);\r\nEndIf;\r\n\r\n#***\r\n\r\nIf (CubeExists(pCube) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\ncDimMax = 4;\r\n\r\nvIndex = 1;\r\nWhile (vIndex <> 0);\r\n\tvDim = TABDIM(pCube, vIndex);\r\n\tIf (vDim @<> '');\r\n\t\tvIndex = vIndex + 1;\r\n\tElse;\r\n\t\tcDimCount = vIndex - 1;\r\n\t\tvIndex = 0;\r\n\tEndIf;\r\nEnd;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Dimension Count: ', NumberToString(cDimCount));\r\nEndIf;\r\n\r\nIf (cDimCount > cDimMax);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#***\r\n\r\nIf (cDimCount = 2);\r\n\r\n\tcDim1 = TABDIM(pCube, 1);\r\n\tcDim2 = TABDIM(pCube, 2);\r\n\r\n\tcDim1Size = DIMSIZ(cDim1);\r\n\tcDim2Size = DIMSIZ(cDim2);\r\n\r\n\tvIndex1 = 1;\r\n\tWhile (vIndex1 <= cDim1Size);\r\n\t\tvElement1 = DIMNM(cDim1, vIndex1);\r\n\r\n\t\tvIndex2 = 1;\r\n\t\tWhile (vIndex2 <= cDim2Size);\r\n\t\t\tvElement2 = DIMNM(cDim2, vIndex2);\r\n\r\n\t\t\tIf (DTYPE(cDim2, vElement2) @= 'S');\r\n\t\t\t\tvValue = CellGetS(pCube, vElement1, vElement2);\r\n\t\t\tElse;\r\n\t\t\t\tvValue = NumberToString(CellGetN(pCube, vElement1, vElement2));\r\n\t\t\tEndIf;\r\n\r\n\t\t\tIf (vValue @<> '');\r\n\t\t\t\tIf (pAlt @= 'Y');\r\n\t\t\t\t\tTextOutput(pBlob | '.blb', vValue, vElement1, vElement2, '', '');\r\n\t\t\t\tElse;\r\n\t\t\t\t\tTextOutput(pBlob | '.blb', vElement1, vElement2, vValue);\r\n\t\t\t\tEndIf;\r\n            EndIf;\r\n\t\t\tvIndex2 = vIndex2 + 1;\r\n\t\tEnd;\r\n\t\tvIndex1 = vIndex1 + 1;\r\n\tEnd;\r\n\t\r\nElseIf (cDimCount = 3);\r\n\r\n\tcDim1 = TABDIM(pCube, 1);\r\n\tcDim2 = TABDIM(pCube, 2);\r\n\tcDim3 = TABDIM(pCube, 3);\r\n\r\n\tcDim1Size = DIMSIZ(cDim1);\r\n\tcDim2Size = DIMSIZ(cDim2);\r\n\tcDim3Size = DIMSIZ(cDim3);\r\n\r\n\tvIndex1 = 1;\r\n\tWhile (vIndex1 <= cDim1Size);\r\n\t\tvElement1 = DIMNM(cDim1, vIndex1);\r\n\r\n\t\tvIndex2 = 1;\r\n\t\tWhile (vIndex2 <= cDim2Size);\r\n\t\t\tvElement2 = DIMNM(cDim2, vIndex2);\r\n\r\n\t\t\tvIndex3 = 1;\r\n\t\t\tWhile (vIndex3 <= cDim3Size);\r\n\t\t\t\tvElement3 = DIMNM(cDim3, vIndex3);\r\n\r\n\t\t\t\tIf (DTYPE(cDim3, vElement3) @= 'S');\r\n\t\t\t\t\tvValue = CellGetS(pCube, vElement1, vElement2, vElement3);\r\n\t\t\t\tElse;\r\n\t\t\t\t\tvValue = NumberToString(CellGetN(pCube, vElement1, vElement2, vElement3));\r\n\t\t\t\tEndIf;\r\n\r\n\t\t\t\tIf (vValue @<> '');\r\n\t\t\t\t\tIf (pAlt @= 'Y');\r\n\t\t\t\t\t\tTextOutput(pBlob | '.blb', vValue, vElement1, vElement2, vElement3, '');\r\n\t\t\t\t\tElse;\r\n\t\t\t\t\t\tTextOutput(pBlob | '.blb', vElement1, vElement2, vElement3, vValue);\r\n\t\t\t\t\tEndIf;\r\n                EndIf;\r\n\t\t\t\tvIndex3 = vIndex3 + 1;\r\n\t\t\tEnd;\r\n\t\t\r\n\t\t\tvIndex2 = vIndex2 + 1;\r\n\t\tEnd;\r\n\t\r\n\t\tvIndex1 = vIndex1 + 1;\r\n\tEnd;\r\n\r\nElseIf (cDimCount = 4);\r\n\r\n\tcDim1 = TABDIM(pCube, 1);\r\n\tcDim2 = TABDIM(pCube, 2);\r\n\tcDim3 = TABDIM(pCube, 3);\r\n\tcDim4 = TABDIM(pCube, 4);\r\n\r\n\tcDim1Size = DIMSIZ(cDim1);\r\n\tcDim2Size = DIMSIZ(cDim2);\r\n\tcDim3Size = DIMSIZ(cDim3);\r\n\tcDim4Size = DIMSIZ(cDim4);\r\n\r\n\tvIndex1 = 1;\r\n\tWhile (vIndex1 <= cDim1Size);\r\n\t\tvElement1 = DIMNM(cDim1, vIndex1);\r\n\r\n\t\tvIndex2 = 1;\r\n\t\tWhile (vIndex2 <= cDim2Size);\r\n\t\t\tvElement2 = DIMNM(cDim2, vIndex2);\r\n\r\n\t\t\tvIndex3 = 1;\r\n\t\t\tWhile (vIndex3 <= cDim3Size);\r\n\t\t\t\tvElement3 = DIMNM(cDim3, vIndex3);\r\n\r\n\t\t\t\tvIndex4 = 1;\r\n\t\t\t\tWhile (vIndex4 <= cDim4Size);\r\n\t\t\t\t\tvElement4 = DIMNM(cDim4, vIndex4);\r\n\r\n\t\t\t\t\tIf (DTYPE(cDim4, vElement4) @= 'S');\r\n\t\t\t\t\t\tvValue = CellGetS(pCube, vElement1, vElement2, vElement3, vElement4);\r\n\t\t\t\t\tElse;\r\n\t\t\t\t\t\tvValue = NumberToString(CellGetN(pCube, vElement1, vElement2, vElement3, vElement4));\r\n\t\t\t\t\tEndIf;\r\n\r\n\t\t\t\t\tIf (vValue @<> '');\r\n\t\t\t\t\t\tIf (pAlt @= 'Y');\r\n\t\t\t\t\t\t\tTextOutput(pBlob | '.blb', vValue, vElement1, vElement2, vElement3, vElement4);\r\n\t\t\t\t\t\tElse;\r\n\t\t\t\t\t\t\tTextOutput(pBlob | '.blb', vElement1, vElement2, vElement3, vElement4, vValue);\r\n\t\t\t\t\t\tEndIf;\r\n                    EndIf;\r\n\t\t\t\t\tvIndex4 = vIndex4 + 1;\r\n\t\t\t\tEnd;\r\n\t\t\t\t\r\n\t\t\t\tvIndex3 = vIndex3 + 1;\r\n\t\t\tEnd;\r\n\t\t\t\r\n\t\t\tvIndex2 = vIndex2 + 1;\r\n\t\tEnd;\r\n\t\t\r\n\t\tvIndex1 = vIndex1 + 1;\r\n\tEnd;\r\n\r\nEndIf;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\nTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pCube",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pBlob",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAlt",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pDelimiter",
+            "Prompt": "",
+            "Value": "9",
+            "Type": "String"
+        },
+        {
+            "Name": "pQuote",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_export_cube"
+    }
+}

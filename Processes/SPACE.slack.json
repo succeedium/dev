@@ -1,0 +1,29 @@
+{
+    "Name": "SPACE.slack",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n# Get the SPACE host from the config cube\r\nsURL = CellGetS( 'SPACE.cfg', 'Value', 'SPACE.host' ) | '/python/';\r\n\r\n#TODO: update API\r\n# Use ExecuteHttpRequest in IBM PA V12 or user SPACE.ExecuteHttpRequest in older versions\r\n#ExecuteHttpRequest(\r\n#  'POST',\r\n#  sURL,\r\n#  'd {\"file\": \"slack.message.py\", \"action\":\"RUN\",arguments: [\"'| sChannel |'\",\"'| sMessage |'\"]}',\r\n#  '-k' );\r\n  \r\nExecuteProcess( 'SPACE.ExecuteHttpRequest', \r\n  'sRequestId', TIMST(NOW(), '\\Y\\m\\d\\h\\i\\s'),\r\n  'sUrl', sURL,\r\n  'sMethod', 'POST',\r\n  'sBodyJSON', '{\"file\": \"slack.py\", \"action\":\"RUN\",arguments:[\"'| sChannel |'\",\"'| sMessage |'\"]}'\r\n  );\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "sChannel",
+            "Prompt": "",
+            "Value": "#ibmpacloud",
+            "Type": "String"
+        },
+        {
+            "Name": "sMessage",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "SPACE.slack"
+    }
+}

@@ -1,0 +1,119 @@
+{
+    "Name": "copy_version",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\n##@  2021.06.09.Succeedium: check if version exists\r\nIf( DimIx( 'Version', pFromVersion ) = 0 );\r\n\r\n  LogOutput( 'ERROR', 'Incorrent Version: '| pFromVersion );\r\n  ProcessError;\r\n\r\nEndIf;\r\n\r\nDatasourceNameForServer=pCubeName;\r\nDatasourceCubeview='zCopyFrom_OLDCUBE';\r\nV1='';\r\nV2='';\r\nV3='';\r\nV4='';\r\nV5='';\r\nV6='';\r\nV7='';\r\nV8='';\r\nV9='';\r\nV10='';\r\nW1='';\r\nW2='';\r\nW3='';\r\nW4='';\r\nW5='';\r\nW6='';\r\nW7='';\r\nW8='';\r\nW9='';\r\nW10='';\r\nN1=0;\r\nS1='';\r\n\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "DataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\n\r\n\r\nIF(pStringDimLoc=4);vStringDimValue=V4;\r\nELSEIF(pStringDimLoc=5);vStringDimValue=V5;\r\nELSEIF(pStringDimLoc=6);vStringDimValue=V6;\r\nELSEIF(pStringDimLoc=7);vStringDimValue=V7;\r\nELSEIF(pStringDimLoc=8);vStringDimValue=V8;\r\nELSEIF(pStringDimLoc=9);vStringDimValue=V9;\r\nELSEIF(pStringDimLoc=10);vStringDimValue=V10;\r\nELSEIF(pStringDimLoc=1);vStringDimValue=V1;\r\nELSEIF(pStringDimLoc=2);vStringDimValue=V2;\r\nELSEIF(pStringDimLoc=3);vStringDimValue=V3;\r\nENDIF;\r\n\r\nW1=V1;\r\nW2=V2;\r\nW3=V3;\r\nW4=V4;\r\nW5=V5;\r\nW6=V6;\r\nW7=V7;\r\nW8=V8;\r\nW9=V9;\r\nW10=V10;\r\n\r\nIF (pVersionDimLoc = 5);W5=pToVersion;\r\nELSEIF (pVersionDimLoc = 6);W6=pToVersion;\r\nELSEIF (pVersionDimLoc = 7);W7=pToVersion;\r\nELSEIF (pVersionDimLoc = 8);W8=pToVersion;\r\nELSEIF (pVersionDimLoc = 9);W9=pToVersion;\r\nELSEIF (pVersionDimLoc = 10);W10=pToVersion;\r\nELSEIF (pVersionDimLoc = 1);W1=pToVersion;\r\nELSEIF (pVersionDimLoc = 2);W2=pToVersion;\r\nELSEIF (pVersionDimLoc = 3);W3=pToVersion;\r\nELSEIF (pVersionDimLoc = 4);W4=pToVersion;\r\nENDIF;\r\n\r\nIF (pNumberDims = 5);\r\n  IF (CellIsUpdateable (pCubeName,W1,W2,W3,W4,W5) = 1);\r\n    IF (DTYPE(pStringDimName, vStringDimValue) @= 'S');\r\n        S1=V6;\r\n         CellPutS(S1, pCubeName,W1,W2,W3,W4,W5);\r\n     ELSE;\r\n         N1=StringToNumber(V6);\r\n         CellPutN(N1,pCubeName,W1,W2,W3,W4,W5);\r\n    ENDIF;\r\n  ELSE;\r\n    ItemSkip;\r\n  ENDIF;\r\nENDIF;\r\n\r\nIF (pNumberDims = 6);\r\n  IF (CellIsUpdateable (pCubeName,W1,W2,W3,W4,W5,W6) = 1);\r\n    IF (DTYPE(pStringDimName, vStringDimValue) @= 'S');\r\n         S1=V7;\r\n         CellPutS(S1, pCubeName,W1,W2,W3,W4,W5,W6);\r\n     ELSE;\r\n          N1=StringToNumber(V7);\r\n          CellPutN(N1,pCubeName,W1,W2,W3,W4,W5,W6);\r\n    ENDIF;\r\n  ELSE;\r\n    ItemSkip;\r\n  ENDIF;\r\n\r\nELSEIF (pNumberDims = 7);\r\n  IF (CellIsUpdateable (pCubeName,W1,W2,W3,W4,W5,W6,W7) = 1);\r\n    IF (DTYPE(pStringDimName, vStringDimValue) @= 'S');\r\n         S1=V8;\r\n          CellPutS(S1, pCubeName,W1,W2,W3,W4,W5,W6,W7);\r\n     ELSE;\r\n         N1=StringToNumber(V8);\r\n          CellPutN(N1,pCubeName,W1,W2,W3,W4,W5,W6,W7);\r\n    ENDIF;\r\n  ELSE;\r\n    ItemSkip;\r\n  ENDIF;\r\n\r\n\r\nELSEIF (pNumberDims = 3);\r\n  IF (CellIsUpdateable (pCubeName,W1,W2,W3) = 1);\r\n    IF (DTYPE(pStringDimName, vStringDimValue) @= 'S');\r\n         S1=V4;\r\n         CellPutS(S1, pCubeName,W1,W2,W3);\r\n     ELSE;\r\n           N1=StringToNumber(V4);\r\n           CellPutN(N1,pCubeName,W1,W2,W3);\r\n    ENDIF;\r\n  ELSE;\r\n    ItemSkip;\r\n  ENDIF;\r\n\r\nELSEIF (pNumberDims = 4);\r\n  IF (CellIsUpdateable (pCubeName,W1,W2,W3,W4) = 1);\r\n    IF (DTYPE(pStringDimName, vStringDimValue) @= 'S');\r\n         S1=V5;\r\n         CellPutS(S1, pCubeName,W1,W2,W3,W4);\r\n     ELSE;\r\n          N1=StringToNumber(V5);\r\n          CellPutN(N1,pCubeName,W1,W2,W3,W4);\r\n    ENDIF;\r\n  ELSE;\r\n    ItemSkip;\r\n  ENDIF;\r\nENDIF;\r\n\r\n\r\n# ASCIIOUTPUT('copydebug.txt','V',V1,V2,V3,V4,V5,V6,V7);\r\n# ASCIIOUTPUT('copydebug.txt','W',W1,W2,W3,W4,W5,W6,W7);\r\n\r\n\r\n",
+    "EpilogProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\nENDTime=Time;\r\n #TextOUTPUT('copydebug.txt',pCubeName,StartTime,EndTime);",
+    "DataSource": {
+        "Type": "TM1CubeView",
+        "dataSourceNameForClient": "Revenue",
+        "dataSourceNameForServer": "Revenue",
+        "view": "zCopyFrom"
+    },
+    "Parameters": [
+        {
+            "Name": "pFromVersion",
+            "Prompt": "Copy From Version",
+            "Value": "Budget",
+            "Type": "String"
+        },
+        {
+            "Name": "pToVersion",
+            "Prompt": "Copy To Version",
+            "Value": "Budget 2",
+            "Type": "String"
+        },
+        {
+            "Name": "pCubeName",
+            "Prompt": "CubeName",
+            "Value": "Revenue",
+            "Type": "String"
+        },
+        {
+            "Name": "pNumberDims",
+            "Prompt": "Number of Dimensions",
+            "Value": 7,
+            "Type": "Numeric"
+        },
+        {
+            "Name": "pVersionDimLoc",
+            "Prompt": "Location of Version Dimension",
+            "Value": 6,
+            "Type": "Numeric"
+        },
+        {
+            "Name": "pStringDimName",
+            "Prompt": "Name of Dimension Containing Strings",
+            "Value": "Month",
+            "Type": "String"
+        },
+        {
+            "Name": "pStringDimLoc",
+            "Prompt": "Location of Dimension Containing Strings",
+            "Value": 4,
+            "Type": "Numeric"
+        }
+    ],
+    "Variables": [
+        {
+            "Name": "V1",
+            "Type": "String",
+            "Position": 1,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V2",
+            "Type": "String",
+            "Position": 2,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V3",
+            "Type": "String",
+            "Position": 3,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V4",
+            "Type": "String",
+            "Position": 4,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V5",
+            "Type": "String",
+            "Position": 5,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V6",
+            "Type": "String",
+            "Position": 6,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V7",
+            "Type": "String",
+            "Position": 7,
+            "StartByte": 0,
+            "EndByte": 0
+        },
+        {
+            "Name": "V8",
+            "Type": "String",
+            "Position": 8,
+            "StartByte": 0,
+            "EndByte": 0
+        }
+    ],
+    "Attributes": {
+        "Caption": "copy_version"
+    }
+}

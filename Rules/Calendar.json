@@ -1,0 +1,4 @@
+{
+    "Name": "Calendar",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\nUNDEFVALS;\n#EndRegion\n#skipcheck;\n['Current Quarter']=S:ELPAR('Month', DB('Calendar','Current Month','String'), 1) ;\n# doc test\n[Calendar:'Calendar':'Model Version']=N: DB('SPACE.cfg', 'Value', 'version');\n#feeders;"
+}

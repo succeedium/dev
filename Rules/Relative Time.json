@@ -1,0 +1,4 @@
+{
+    "Name": "Relative Time",
+    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\nUNDEFVALS;\n#EndRegion\n#UNDEFVALS;\n\n['ActFor']=S:IF(ATTRN('Month',!Month,'Number')>=ATTRN('Month',DB('Calendar','Fcst Month','String'),'Number'),'F','A');\n\n['ActForMonth']=N:IF(DB('Relative Time',!Year,!Month,'ActFor')@='A',1,0);\n\n\nFEEDERS;\n['ActFor']=>['ActForMonth'];\n['ActFor']=>DB('Income Statement', 'Local', 'Total Company', !Year, !Month, 'NPAA', 'Forecast');\n['ActFor']=>DB('Income Statement', 'Local', 'Total Company', !Year, !Month, 'Statistics', 'Forecast');"
+}

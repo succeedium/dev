@@ -1,0 +1,95 @@
+{
+    "Name": "Add Product Vision",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\n\r\nASCIIOutput('guy.txt', pParent, pNewNumber,pNewName,pOrg,pChannel,pYear );\r\n\r\n# Declare Variables\r\npNewName=TRIM(pNewName);\r\nvNewProduct = '';\r\nvNewProductAlias ='';\r\ni=1;\r\nvDimSize=0;\r\n#Clear old NewProduct Attribute\r\nVIEWZEROOUT('}ElementAttributes_product','OldNewProduct');\r\n\r\n#\r\n# Make sure that parent is indeed a parent\r\n#\r\nIF (ELLEV('product', pParent)<>1);\r\n  ProcessError;\r\nENDIF;\r\n#\r\n# Make sure that you have write access to the cube\r\n#\r\nvUpdateable=CellIsUpdateable ('Revenue', pOrg, pChannel,'22002' ,'Jan',pYear,pVersion,'Units Sold');\r\nIF (vUpdateable=0);\r\n  ProcessError;\r\nENDIF;\r\n#\r\nvNewProduct=SubsetGetElementName('product', 'New', 1);\r\nvNewProductAlias=ATTRS('product', vNewProduct, 'Caption_Default');\r\npNewName = TRIM(pNewName);\r\nvProductCode='';\r\nvProductAlias='';\r\nvExistingCode='';\r\nvProductLevel=0;\r\n\r\nIF (pNewName @='');\r\n# Add in a random product so that the \"New\" Subset in the \"product\" dimension is always populated\r\n   SubsetDeleteAllElements('product', 'New');\r\n   SubsetElementInsert('product', 'New', '22001', 1);\r\n   ProcessQuit;\r\nENDIF;\r\n\r\nvDimSize=DIMSIZ('product');\r\n\r\ni=1;\r\nWHILE (i<=vDimSize);\r\n   vProductCode= DIMNM('product', i);\r\n   vProductAlias= ATTRS('product', vProductCode, 'Caption_Default');\r\n   vProductLevel = ELLEV('product', vProductCode);\r\n   IF(vProductLevel >= 1 & pNewName @= vProductAlias);\r\n      ProcessError;\r\n   ENDIF;\r\n   IF(vProductAlias @= pNewName);\r\n      vExistingCode=vProductCode;\r\n   ENDIF;\r\n   i = i + 1;\r\nEND;\r\n\r\nIF(vExistingCode @= '');\r\n  IF(SubsetExists('Organization', 'zCopyFrom')=0);\r\n    SubsetCreate('Organization', 'zCopyFrom');\r\n  ENDIF;\r\n  IF(SubsetGetSize('Organization','zCopyFrom')>0);\r\n    SubsetDeleteAllElements('Organization','zCopyFrom');\r\n  ENDIF;\r\n  SubsetElementInsert('Organization','zCopyFrom',pOrg,1);\r\n  ExecuteProcess('Add_Product', 'pParent', pParent,'pNewNumber', pNewNumber,'pNewName',pNewName);\r\nELSE;\r\n   IF(SubsetGetSize('Product','New')>0);\r\n      SubsetDeleteAllElements('Product','New');\r\n   ENDIF;\r\n   SubsetElementInsert('Product','New',vExistingCode,1);\r\nENDIF;\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "DataProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****",
+    "EpilogProcedure": "\r\n#****Begin: Generated Statements***\r\n#****End: Generated Statements****\r\n\r\n#ASCIIOutput('c:\\guy2.txt', pParent, pNewNumber,pNewName,pOrg,pChannel,pYear,pVersion,pProductDriver,pSpread,pUnitPrice,pUnitCost );\r\n\r\nExecuteProcess('Update_NewProduct_Fcst', 'pOrg',pOrg,'pChannel',pChannel,'pYear',pYear,'pVersion',pVersion,'pUnitFcst',pUnitFcst,'pFcstMethod',pFcstMethod,'pProductDriver',pProductDriver,'pSpread',pSpread,'pUnitPrice',pUnitPrice,'pUnitCost',pUnitCost);\r\n\r\n\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pParent",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pNewNumber",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pNewName",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pOrg",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pChannel",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pYear",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pVersion",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pUnitFcst",
+            "Prompt": "",
+            "Value": 0,
+            "Type": "Numeric"
+        },
+        {
+            "Name": "pFcstMethod",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pProductDriver",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pSpread",
+            "Prompt": "",
+            "Value": "",
+            "Type": "String"
+        },
+        {
+            "Name": "pUnitPrice",
+            "Prompt": "",
+            "Value": "0.000000",
+            "Type": "String"
+        },
+        {
+            "Name": "pUnitCost",
+            "Prompt": "",
+            "Value": "0.000000",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "Add Product Vision"
+    }
+}

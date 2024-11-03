@@ -1,0 +1,65 @@
+{
+    "Name": "}tp_custom_TI_update_TI_cube",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '}';\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\nvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n'pProcess', cTM1Process, 'pControl', 'Y');\r\nIf (vReturnValue <> ProcessExitNormal());\r\n\tProcessError;\r\nEndIf;\r\nEndif;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#***\r\ncSystemConfigDim = cControlPrefix | 'tp_system_config';\r\nIf (DimensionExists(cSystemConfigDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\ncSecurityModeNode = 'IntegratedSecurityMode';\r\ncConfigValueAttr = 'ConfigValue';\r\nvSecurityMode = ATTRS(cSystemConfigDim, cSecurityModeNode, cConfigValueAttr);\r\n\r\ncCognosEveryoneGroup = 'CAMID(\"::Everyone\")';\r\ncTpEveryoneGroup = cControlPrefix | 'tp_Everyone';\r\nIf (vSecurityMode @= '5');\r\n\tcEveryoneGroup = cCognosEveryoneGroup;\r\nElse;\r\n\tcEveryoneGroup = cTpEveryoneGroup;\r\n\r\nEndIf;\r\n\r\ncProcessesDim = '}Processes';\r\ncProcessSecurityCube = '}ProcessSecurity';\r\n\r\n#***\r\nvAppSubset = 'temp_app_' | pApplicationId;\r\nvAppDim = '}tp_applications';\r\ncActionTICube = '}tp_workflow_action_TI';\r\ncActionDimension = '}tp_workflow_actions';\r\ncActionTIMeasuresDimension = '}tp_workflow_action_TI_measures';\r\ncFieldPreActionTI = 'PreActionTI';\r\ncFieldPreActionTIEnabled = 'PreActionTIEnabled';\r\ncFieldPostActionTI = 'PostActionTI';\r\ncFieldPostActionTIEnabled = 'PostActionTIEnabled';\r\nIF (CubeExists(cActionTICube) =0);\r\n\t#something went wrong when creating planning artifacts\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube',\r\n\t\t'pGuid', pExecutionId,\r\n\t\t'pProcess', cTM1Process,\r\n\t\t'pErrorCode', 'TI_CUBE_NOT_EXIST',\r\n\t\t'pErrorDetails', cActionTICube,\r\n\t\t'pControl', 'Y');\r\n\t\r\n\tProcessError;\r\n\r\nEndif;\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), pApplicationId, pPreActionTI, pPreActionTIEnabled, \r\n\t\tpPostActionTI, pPostActionTIEnabled, pClearCube);\r\nEndIf;\r\n\r\n#***remove read Access to all custom TIs and then clear them from the Custom TI cube\r\nIF (pClearCube @= 'Y');\r\n\r\n\t#***Remove read access on all custom TIs if they are not used by other applications\r\n\tvTotalActions = DIMSIZ(cActionDimension);\r\n\tvActionLooper = 1;\r\n\tWhile (vActionLooper <= vTotalActions);\r\n\t\tvAction = DIMNM(cActionDimension, vActionLooper);\r\n\t\tvCustomPreTI = CellGetS(cActionTICube, pApplicationId, vAction, cFieldPreActionTI );\r\n\t\tvCustomPostTI = CellGetS(cActionTICube, pApplicationId, vAction, cFieldPostActionTI );\r\n\t\tvPreTIUsedByOtherApp = 'N';\r\n\t\tvPostTIUsedByOtherApp = 'N';\r\n\r\n\t\tvTotalApplications = DIMSIZ(vAppDim);\r\n\t\tvAppLooper = 1;\r\n\r\n\t\tWhile (vAppLooper <= vTotalApplications);\r\n\t\t\tvOtherApp = DIMNM(vAppDim, vAppLooper);\r\n\t\t\tIF (vOtherApp @<> pApplicationId);\r\n\t\t\t\tvActionLooper2 = 1;\r\n\t\t\t\tWhile (vActionLooper2 <= vTotalActions);\r\n\t\t\t\t\tvOtherAppPreTI = CellGetS(cActionTICube, vOtherApp, vAction, cFieldPreActionTI );\r\n\t\t\t\t\tvOtherAppPostTI = CellGetS(cActionTICube, vOtherApp, vAction, cFieldPostActionTI );\r\n\t\t\t\t\tIF (vCustomPreTI @<>'' & (vCustomPreTI @= vOtherAppPreTI % vCustomPreTI @= vOtherAppPostTI));\r\n\t\t\t\t\t\tvPreTIUsedByOtherApp = 'Y';\r\n\t\t\t\t\tEndif;\r\n\t\t\t\t\tIF (vCustomPostTI @<>'' & (vCustomPostTI @= vOtherAppPreTI % vCustomPostTI @= vOtherAppPostTI));\r\n\t\t\t\t\t\tvPostTIUsedByOtherApp = 'Y';\r\n\t\t\t\t\tEndif;\r\n\t\t\t\t\tvActionLooper2 = vActionLooper2 +1;\r\n\t\t\t\tEnd;\r\n\t\t\tEndif;\r\n\t\t\tvAppLooper = vAppLooper +1;\r\n\t\tEnd;\r\n\r\n\t\tIF (vPreTIUsedByOtherApp @= 'N');\r\n\t\t\tIF (DIMIX(cProcessesDim, vCustomPreTI)>0);\r\n\t\t\t\tcCurrentCellValue = CellGetS(cProcessSecurityCube, vCustomPreTI, cEveryoneGroup); \r\n\t\t\t\tIf (cCurrentCellValue @= 'Read' % cCurrentCellValue @= 'Write');\r\n\t\t\t\t\tIf (CellIsUpdateable(cProcessSecurityCube, vCustomPreTI, cEveryoneGroup) = 0);\r\n\t\t\t\t\t\tvDetail=INSRT(cEveryoneGroup,')',1);\r\n\t\t\t\t\t\tvDetail=INSRT(',',vDetail,1);\r\n\t\t\t\t\t\tvDetail=INSRT(cProcessSecurityCube,vDetail,1);\r\n\t\t\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t\t\t\t'pErrorCode', 'TI_SECURITY_NOT_UPDATEABLE',\r\n\t\t\t\t\t\t\t'pErrorDetails', vDetail,\r\n\t\t\t\t\t\t\t'pControl', 'Y');\r\n\t\t\t\t\r\n\t\t\t\t\t\tProcessError;\r\n\t\t\t\t\tEndIf;\r\n\t\t\t\tEndif;\r\n\t\t\t\tCellPutS('NONE', cProcessSecurityCube, vCustomPreTI, cEveryoneGroup);\r\n\t\t\tEndif;\r\n\t\tEndif;\r\n\r\n\t\tIF (vPostTIUsedByOtherApp @= 'N');\r\n\t\t\tIF (DIMIX(cProcessesDim, vCustomPostTI)>0);\r\n\t\t\t\tcCurrentCellValue = CellGetS(cProcessSecurityCube, vCustomPostTI, cEveryoneGroup); \r\n\t\t\t\tIf (cCurrentCellValue @= 'Read' % cCurrentCellValue @= 'Write');\r\n\t\t\t\t\tIf (CellIsUpdateable(cProcessSecurityCube, vCustomPostTI, cEveryoneGroup) = 0);\r\n\t\t\t\t\t\tvDetail=INSRT(cEveryoneGroup,')',1);\r\n\t\t\t\t\t\tvDetail=INSRT(',',vDetail,1);\r\n\t\t\t\t\t\tvDetail=INSRT(cProcessSecurityCube,vDetail,1);\r\n\t\t\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t\t\t\t'pErrorCode', 'TI_SECURITY_NOT_UPDATEABLE',\r\n\t\t\t\t\t\t\t'pErrorDetails', vDetail,\r\n\t\t\t\t\t\t\t'pControl', 'Y');\r\n\t\t\t\t\r\n\t\t\t\t\t\tProcessError;\r\n\t\t\t\t\tEndIf;\r\n\t\t\t\tEndif;\r\n\t\t\t\tCellPutS('NONE', cProcessSecurityCube, vCustomPostTI, cEveryoneGroup);\r\n\t\t\tEndif;\r\n\r\n\t\tEndif;\r\n\r\n\t\tvActionLooper = vActionLooper +1;\r\n\tEnd;\r\n\r\n\t#***clear entries from the custom TI cube for this application only\r\n\r\n\tIF (SubsetExists(vAppDim, vAppSubset)>0);\r\n\t\tSubsetDestroy(vAppDim, vAppSubset);\r\n\tEndif;\r\n\tSubsetCreate(vAppDim, vAppSubset);\r\n\tSubsetElementInsert(vAppDim, vAppSubset, pApplicationId, 1);\r\n\t#***\r\n\tvTempView = 'tp_temp_view_' | pExecutionId;\r\n\tViewCreate(cActionTICube, vTempView);\r\n\tViewRowDimensionSet(cActionTICube, vTempView, cActionDimension, 1);\r\n\tViewColumnDimensionSet(cActionTICube, vTempView,cActionTIMeasuresDimension, 1);\r\n\tViewTitleDimensionSet(cActionTICube, vTempView, vAppDim);\r\n\tViewSubsetAssign(cActionTICube, vTempView, vAppDim, vAppSubset);\r\n\tViewZeroOut(cActionTICube, vTempView);\r\n\tViewDestroy(cActionTICube, vTempView);\r\n\tSubsetDestroy(vAppDim, vAppSubset);\r\n\r\nEndif;\r\n\r\n#***\r\n\r\nvSetTIAccess = 'N';\r\nIF (DIMIX(cActionDimension, pWorkflowAction) >0);\r\n\r\n\tCellPutS(pPreActionTI, cActionTICube, pApplicationId, pWorkflowAction, cFieldPreActionTI);\r\n\tCellPutS(pPreActionTIEnabled, cActionTICube, pApplicationId, pWorkflowAction, cFieldPreActionTIEnabled);\r\n\tCellPutS(pPostActionTI, cActionTICube, pApplicationId, pWorkflowAction, cFieldPostActionTI);\r\n\tCellPutS(pPostActionTIEnabled, cActionTICube, pApplicationId, pWorkflowAction, cFieldPostActionTIEnabled);\r\n\tvSetTIAccess = 'Y';\r\n\r\nEndif;\r\n#***\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\nIF (vSetTIAccess @= 'Y' & pPreActionTI @<> '');\r\n\r\n\tIF (DIMIX(cProcessesDim, pPreActionTI)>0);\r\n\t\tcCurrentCellValue = CellGetS(cProcessSecurityCube, pPreActionTI, cEveryoneGroup); \r\n\t\tIf (cCurrentCellValue @= '' % cCurrentCellValue @= 'NONE');\r\n\t\t\tIf (CellIsUpdateable(cProcessSecurityCube, pPreActionTI, cEveryoneGroup) = 0);\r\n\t\t\t\tvDetail=INSRT(cEveryoneGroup,')',1);\r\n\t\t\t\tvDetail=INSRT(',',vDetail,1);\r\n\t\t\t\tvDetail=INSRT(pPreActionTI,vDetail,1);\r\n\t\t\t\tvDetail=INSRT('(',vDetail,1);\r\n\t\t\t\tvDetail=INSRT(cProcessSecurityCube,vDetail,1);\r\n\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t\t'pErrorCode', 'TI_SECURITY_NOT_UPDATEABLE',\r\n\t\t\t\t\t'pErrorDetails', vDetail,\r\n\t\t\t\t\t'pControl', 'Y');\r\n\t\t\t\t\r\n\t\t\t\tProcessError;\r\n\t\t\tEndIf;\r\n\t\t\tCellPutS('Read', cProcessSecurityCube, pPreActionTI, cEveryoneGroup);\r\n\t\tEndif;\r\n\tElse;\r\n\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t'pGuid', pExecutionId, \r\n\t\t\t'pProcess', cTM1Process, \r\n\t\t\t'pErrorCode', 'TI_COSTOM_TI_NOT_EXIST',\r\n\t\t\t'pErrorDetails', pPreActionTI,\r\n\t\t\t'pControl', 'Y');\r\n\t\t\t\t\r\n\t\tProcessError;\r\n\tEndif;\r\nEndIf;\r\n\r\nIF (vSetTIAccess @= 'Y' & pPostActionTI @<> '');\r\n\r\n\tIF (DIMIX(cProcessesDim, pPostActionTI)>0);\r\n\t\tcCurrentCellValue = CellGetS(cProcessSecurityCube, pPostActionTI, cEveryoneGroup); \r\n\t\tIf (cCurrentCellValue @= '' % cCurrentCellValue @= 'NONE');\r\n\t\t\tIf (CellIsUpdateable(cProcessSecurityCube, pPostActionTI, cEveryoneGroup) = 0);\r\n\t\t\t\tvDetail=INSRT(cEveryoneGroup,')',1);\r\n\t\t\t\tvDetail=INSRT(',',vDetail,1);\r\n\t\t\t\tvDetail=INSRT(pPostActionTI,vDetail,1);\r\n\t\t\t\tvDetail=INSRT('(',vDetail,1);\r\n\t\t\t\tvDetail=INSRT(cProcessSecurityCube,vDetail,1);\r\n\t\t\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t\t\t'pGuid', pExecutionId, \r\n\t\t\t\t\t'pProcess', cTM1Process, \r\n\t\t\t\t\t'pErrorCode', 'TI_SECURITY_NOT_UPDATEABLE',\r\n\t\t\t\t\t'pErrorDetails', vDetail,\r\n\t\t\t\t\t'pControl', 'Y');\r\n\t\t\t\t\r\n\t\t\t\tProcessError;\r\n\t\t\tEndIf;\r\n\t\t\tCellPutS('Read', cProcessSecurityCube, pPostActionTI, cEveryoneGroup);\r\n\t\tEndif;\r\n\tElse;\r\n\t\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_error_update_error_cube', \r\n\t\t\t'pGuid', pExecutionId, \r\n\t\t\t'pProcess', cTM1Process, \r\n\t\t\t'pErrorCode', 'TI_COSTOM_TI_NOT_EXIST',\r\n\t\t\t'pErrorDetails', pPreActionTI,\r\n\t\t\t'pControl', 'Y');\r\n\t\t\t\t\r\n\t\tProcessError;\r\n\tEndif;\r\nEndIf;\r\n#***\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pApplicationId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pWorkflowAction",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pPreActionTI",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pPreActionTIEnabled",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pPostActionTI",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pPostActionTIEnabled",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pClearCube",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_custom_TI_update_TI_cube"
+    }
+}

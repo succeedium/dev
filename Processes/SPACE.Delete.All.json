@@ -1,0 +1,16 @@
+{
+    "Name": "SPACE.Delete.All",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n\r\nIF(1>2);\r\n# Loop dimensions\r\ndim = '}Dimensions';\r\nn = DimSiz( dim ); While( n > 0 );\r\n  elm = DimNm( dim, n );\r\n  If(Subst(elm,1,1)@<>'}');\r\n    If( Scan(':',elm)=0 ); DimensionDestroy(elm); EndIf;\r\n    LogOutput('INFO',elm);\r\n  EndIf;\r\nn = n - 1; End;\r\nENDIF;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "SPACE.Delete.All"
+    }
+}

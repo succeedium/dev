@@ -1,0 +1,22 @@
+{
+    "Name": "ODBC example process",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "ODBC",
+        "dataSourceNameForClient": "GV Test DB",
+        "dataSourceNameForServer": "GV Test DB",
+        "password": "0FBXe38gaz1sxC+bzb69gcn+K5Y6R4pbN4m8dXmtDCc=",
+        "query": "SELECT name FROM tbl",
+        "userName": "tm1",
+        "usesUnicode": true
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "ODBC example process"
+    }
+}

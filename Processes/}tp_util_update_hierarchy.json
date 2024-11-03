@@ -1,0 +1,65 @@
+{
+    "Name": "}tp_util_update_hierarchy",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\ncControlPrefix = '}';\r\n\r\n#*** Check dimension\r\n\r\nIf (DimensionExists(pDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Check subset\r\n\r\ncSubsetSize = 0;\r\nIf (pSubset @<> '');\r\n\tIf (SubsetExists(pDim, pSubset) = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tcSubsetSize = SubsetGetSize(pDim, pSubset);\r\nEndIf;\r\n\r\n#*** Check parent\r\n\r\ncParentPName = '';\r\ncParentDimIndex = 0;\r\ncParentSubsetIndex = 0;\r\nIf (pParent @<> '');\r\n\tcParentDimIndex = DIMIX(pDim, pParent);\r\n\tIf (cParentDimIndex = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t#If (DTYPE(pDim, pParent) @<> 'C');\r\n\t#\tProcessError;\r\n\t#EndIf;\r\n\tcParentPName = DimensionElementPrincipalName(pDim, pParent);\r\n\t\r\n\tIf (pSubset @<> '');\r\n\t\tvIndex = 1;\r\n\t\twhile (vIndex <= cSubsetSize);\r\n\t\t\tvElement = SubsetGetElementName(pDim, pSubset, vIndex);\r\n\t\t\tvElementPName = DimensionElementPrincipalName(pDim, vElement);\r\n\t\t\tIf (cParentPName @= vElementPName);\r\n\t\t\t\tcParentSubsetIndex = vIndex;\r\n\t\t\t\tvIndex = cSubsetSize;\r\n\t\t\tEndIf;\r\n\t\t\tvIndex = vIndex +1;\r\n\t\tEnd;\r\n\t\t\r\n\t\tIf (cParentSubsetIndex = 0);\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\tEndIf;\r\nEndIf;\r\n\r\n#*** Check Node\r\n\r\nIf (pNode @= '');\r\n\tProcessError;\r\nEndIf;\r\n\r\ncNodeDimIndex = 0;\r\ncNodeSubsetIndex = 0;\r\ncNodePName = DimensionElementPrincipalName(pDim, pNode);\r\ncNodeDimIndex = DIMIX(pDim, pNode);\r\nIf (cNodeDimIndex > 0);\r\n\tvIndex = 1;\r\n\twhile (vIndex <= cSubsetSize);\r\n\t\tvElement = SubsetGetElementName(pDim, pSubset, vIndex);\r\n\t\tvElementPName = DimensionElementPrincipalName(pDim, vElement);\r\n\t\tIf (cNodePName @= vElementPName);\r\n\t\t\tcNodeSubsetIndex = vIndex;\r\n\t\t\tvIndex = cSubsetSize;\r\n\t\tEndIf;\r\n\t\tvIndex = vIndex +1;\r\n\tEnd;\r\nEndIf;\r\n\r\n#*** Check node type\r\n\r\nIf (pNodeType @<> 'N' & pNodeType @<> 'C' & pNodeType @<> 'S');\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Convert weight\r\n\r\ncWeight = StringToNumber(pWeight);\r\n\r\n#*** Action\r\n\r\nIf (pAction @= 'ADD');\r\n\r\n\tIf (cNodeDimIndex = 0);\r\n\r\n\t\tIf (cParentDimIndex = 0);\r\n\t\t\tDimensionElementInsert(pDim, '', pNode, pNodeType);\r\n\t\tElse;\r\n\t\t\tvNode = DIMNM(pDim, cParentDimIndex + 1);\r\n\t\t\tIf (vNode @<> '');\r\n\t\t\t\tDimensionElementInsert(pDim, vNode, pNode, pNodeType);\r\n\t\t\tElse;\r\n\t\t\t\tDimensionElementInsert(pDim, '', pNode, pNodeType);\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\r\n\tElse;\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tIf (cParentPName @<> '');\r\n\t\tDimensionElementComponentAdd(pDim, cParentPName, pNode, cWeight);\r\n\tEndIf;\r\n\r\nElseIf (pAction @= 'DELETE');\r\n\r\n\tIf (cNodeDimIndex = 0);\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tDimensionElementDelete(pDim, pNode);\r\nElseIf (pAction @= 'REMOVE_PARENT');\r\n\tIf (cParentDimIndex > 0);\r\n\t\tDimensionElementComponentDelete(pDim, pParent, pNode);\r\n\tEndIf;\r\n\t\r\n\tIf (pSubset @<> '' & cNodeSubsetIndex > 0);\r\n\t\tSubsetElementDelete(pDim, pSubset, cNodeSubsetIndex);\r\n\tEndIf;\r\nElseIf (pAction @= 'INSERT_CHILD');\r\n\tIf (cParentDimIndex > 0);\r\n\t\tIf (pNodeType @<> DTYPE(pDim, pNode));\r\n\t\t\tDimensionElementDelete(pDim, pNode);\r\n\t\t\tvNode = DIMNM(pDim, cParentDimIndex + 1);\r\n\t\t\tIf (vNode @<> '');\r\n\t\t\t\tDimensionElementInsert(pDim, vNode, pNode, pNodeType);\r\n\t\t\tElse;\r\n\t\t\t\tDimensionElementInsert(pDim, '', pNode, pNodeType);\r\n    \t\tEndIf;\r\n\t\tEndIf;\r\n\t\t\r\n\t\tDimensionElementComponentAdd(pDim, cParentPName, pNode, cWeight);\r\n\tElse;\r\n\t\tDimensionElementInsert(pDim, '', pNode, pNodeType);\r\n\tEndIf;\r\nElseIf (pAction @= 'MODIFY_WEIGHT');\r\n\tIf (cNodeDimIndex > 0);\r\n\t    If (cParentDimIndex > 0 & ELISPAR(pDim, pParent, pNode) = 1);\r\n\t\t\tDimensionElementComponentDelete(pDim, cParentPName, pNode);\r\n\t\t\tDimensionElementComponentAdd(pDim, cParentPName, pNode, cWeight);\r\n\t\tElse;\r\n\t\t\tProcessError;\r\n\t\tEndIf;\r\n\tElse;\r\n\t\tProcessError;\r\n\tEndIf;\r\nElse;\r\n\tProcessError;\r\nEndIf;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n\r\n\r\n#*** Action\r\n\r\nIf (pAction @= 'ADD');\r\n\r\n\tIf (cParentPName @<> '');\r\n\t\tIf (pSubset @<> '');\r\n\t\t    If (pNode @<> SubsetGetElementName(pDim, pSubset, cParentSubsetIndex + 1));\r\n\t\t\t\tSubsetElementInsert(pDim, pSubset, pNode, cParentSubsetIndex + 1);\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\tEndIf;\r\n\r\nElseIf (pAction @= 'DELETE');\r\n\t# Do nothing\r\nElseIf (pAction @= 'REMOVE_PARENT');\r\n\t# Do nothing\r\nElseIf (pAction @= 'INSERT_CHILD');\r\n\tIf (cParentDimIndex > 0);\r\n\t\tIf (pSubset @<> '');\r\n\t\t\tIf (pNode @<> SubsetGetElementName(pDim, pSubset, cParentSubsetIndex + 1));\r\n\t\t\t\tSubsetElementInsert(pDim, pSubset, pNode, cParentSubsetIndex + 1);\r\n\t\t\tEndIf;\r\n\t\tEndIf;\r\n\tElse;\r\n\t\tSubsetElementInsert(pDim, pSubset, pNode, cParentSubsetIndex + 1);\r\n\tEndIf;\r\nElseIf (pAction @= 'MODIFY_WEIGHT');\r\n\t# Do nothing\r\nElse;\r\n\tProcessError;\r\nEndIf;\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pParent",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pNodeType",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pWeight",
+            "Prompt": "",
+            "Value": "1.0",
+            "Type": "String"
+        },
+        {
+            "Name": "pAction",
+            "Prompt": "",
+            "Value": "ADD",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_update_hierarchy"
+    }
+}

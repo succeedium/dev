@@ -1,0 +1,29 @@
+{
+    "Name": "}tp_reset_views",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\nvAppCube = '}tp_application_cubes';\r\nvCubesDim = '}Cubes';\r\nvClientsDim = '}Clients';\r\nvTotalCubes = DIMSIZ(vCubesDim);\r\n\r\nlooper =1;\r\nWhile (looper <= vTotalCubes);\r\n\tvCube = DIMNM(vCubesDim, looper);\r\n\tIF (SUBST(vCube, 1,1) @<> '}');\r\n\t\tvCubeType = CellGetS(vAppCube, pAppId, vCube);\r\n\t\tIF (vCubeType @= 'A' % vCubeType @= 'Y');\r\n\t\t\tvTotalClients = DIMSIZ(vClientsDim);\r\n\t\t\tvClientLooper = 1;\r\n\t\t\tWhile (vClientLooper <= vTotalClients);\r\n\t\t\t\tvClient = DIMNM(vClientsDim, vClientLooper);\r\n\t\t\t\tvReturnValue = ExecuteProcess('}tp_reset_view_by_cube_user', 'pExecutionId', pExecutionId,\r\n\t\t\t\t\t'pAppId', pAppId, 'pCube', vCube, 'pUser', vClient);\r\n\t\t\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\t\t\tProcessError;\r\n\t\t\t\tEndIf;\r\n\t\t\t\tvClientLooper = vClientLooper +1;\r\n\t\t\tEnd;\r\n\t\tEndif;\r\n\tEndif;\r\n\tlooper = looper +1;\r\nEnd;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_reset_views"
+    }
+}

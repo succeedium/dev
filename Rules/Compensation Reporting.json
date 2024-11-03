@@ -1,0 +1,4 @@
+{
+    "Name": "Compensation Reporting",
+    "Rules": "SKIPCHECK;\n\n\n[]=if(!Employee Name @=DB('Compensation',!organization,!EmployeeList,!Month,!Year,!Version,'EmpID'),DB('Compensation',!organization,!EmployeeList,!Month,!Year,!Version,!Compensation),STET);\n\nFEEDERS;\n"
+}

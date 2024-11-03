@@ -1,0 +1,71 @@
+{
+    "Name": "}tp_workflow_execute_action",
+    "HasSecurityAccess": true,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\n\tcControlPrefix = '}';\r\nEndIf;\r\n\r\n\r\n#*** Log File Name\r\ncConfigDim = cControlPrefix | 'tp_config';\r\nIf (DimensionExists(cConfigDim) = 1);\r\n\tcGenerateLog = ATTRS(cConfigDim, 'Generate TI Log', 'String Value');\r\nElse;\r\n\tcGenerateLog = 'N';\r\nEndIf;\r\n\r\ncTM1Process = GetProcessName();\r\nStringGlobalVariable('gPrologLog');\r\nStringGlobalVariable('gEpilogLog');\r\nStringGlobalVariable('gDataLog');\r\n\r\nIF (cGenerateLog @= 'Y' % cGenerateLog @= 'T');\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_get_log_file_names', 'pExecutionId', pExecutionId,\r\n\t\t'pProcess', cTM1Process, 'pControl', pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\nEndIf;\r\n\r\ncPrologLog = gPrologLog;\r\ncEpilogLog = gEpilogLog;\r\ncDataLog = gDataLog;\r\ncTM1Log = cPrologLog;\r\n\r\n#*** Log Parameters\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'Parameters:', pExecutionId, pTime, pAppId, pNode, pUser, pAction, pAnnotationBody, pAnnotationTitle, pControl);\r\nEndIf;\r\n\r\n#***\r\nactionAllowAnnotate = 'F';\r\nIF (pAction @= 'Own');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_own_node',\r\n\t\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, \r\n\t\t'pNewOwnerID', TM1User(), 'pCheckBouncingOnly', 'N', 'pBouncingMode', '', 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\nELSEIF (pAction @= 'Offline');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_offline_node',\r\n\t\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pUser', pUser, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tactionAllowAnnotate = 'T';\r\n\t\r\nELSEIF (pAction @= 'Online');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_online_node',\r\n\t\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pUser', pUser, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tactionAllowAnnotate = 'T';\r\n\t\r\nELSEIF (pAction @= 'Release');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_release_node',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pUser', pUser, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tactionAllowAnnotate = 'T';\r\n\r\nELSEIF (pAction @= 'SubmitChildren');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_submit_leaf_children',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tactionAllowAnnotate = 'T';\r\n\r\nELSEIF (pAction @= 'Submit');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_submit_node',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\tactionAllowAnnotate = 'T';\r\n\r\nELSEIF (pAction @= 'Reject');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_reject_nodes',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\t\r\n\tactionAllowAnnotate = 'T';\r\n\r\nELSEIF (pAction @= 'Enter');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_enter_node',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\nELSEIF (pAction @= 'Save');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_save_node',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\n\r\nELSEIF (pAction @= 'Leave');\r\n\r\n\tvReturnValue = ExecuteProcess(cControlPrefix | 'tp_workflow_leave_node',\r\n\t'pExecutionId', pExecutionId,'pTime', pTime,  'pAppId', pAppId, 'pNode', pNode, 'pControl',  pControl);\r\n\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\tProcessError;\r\n\tEndIf;\r\n\r\nELSEIF (pAction @= 'Annotate');\r\n\tactionAllowAnnotate = 'T';\r\n\r\nENDIF;\r\n\r\n#*** No error\r\n\r\nIf (cGenerateLog @= 'Y');\r\n\tTextOutput(cTM1Log, TIMST(NOW, '\\Y-\\m-\\d \\h:\\i:\\s'), 'The end has been reached.');\r\nEndIf;\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pTime",
+            "Prompt": "",
+            "Value": "0",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pNode",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pUser",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pAction",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pAnnotationBody",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pAnnotationTitle",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "Y",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_workflow_execute_action"
+    }
+}

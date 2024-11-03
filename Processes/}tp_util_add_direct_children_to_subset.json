@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_util_add_direct_children_to_subset",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2013\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n\r\n#*** Check dimension\r\n\r\nIf (DimensionExists(pDim) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Check subset\r\n\r\nIf (SubsetExists(pDim, pSubset) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n\r\n#*** Check parent\r\n\r\nIf (DIMIX(pDim, pParent) = 0);\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Check node type\r\n\r\nIf (DTYPE(pDim, pParent) @<> 'C');\r\n\tProcessError;\r\nEndIf;\r\n\r\n#*** Add Children\r\n\r\nvTotalChildren = ELCOMPN(pDim, pParent);\r\nvIndex = 1;\r\nWhile (vIndex <= vTotalChildren);\r\n\tvChild = ELCOMP(pDim, pParent, vIndex);\r\n\tSubsetElementInsert(pDim, pSubset, vChild, 0);\r\n\t\r\n\tIf (DTYPE(pDim, vChild) @= 'C');\r\n\t\tvReturnValue = ExecuteProcess('}tp_util_add_direct_children_to_subset', 'pExecutionId', pExecutionId,'pDim', pDim,\r\n\t\t\t'pSubset', pSubset, 'pParent', vChild);\r\n\t\tIf (vReturnValue <> ProcessExitNormal());\r\n\t\t\tProcessError;\r\n\t\tEndIf;\t\r\n\tEndIf;\r\n        \r\n\tvIndex = vIndex + 1;\r\nEnd;\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pDim",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pSubset",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        },
+        {
+            "Name": "pParent",
+            "Prompt": "",
+            "Value": "NA",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_util_add_direct_children_to_subset"
+    }
+}

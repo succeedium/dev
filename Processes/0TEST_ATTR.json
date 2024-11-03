@@ -1,0 +1,16 @@
+{
+    "Name": "0TEST_ATTR",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "AttrPutS( 'Ligne 1', '0DimTest', '1', 'Caption', 'fr');\r\n\r\n#CellPutS( 'Ligne 1', '}ElementAttributes_0DimTest', '1', 'Caption' );\r\n# Comment\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "0TEST_ATTR"
+    }
+}

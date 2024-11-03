@@ -1,0 +1,16 @@
+{
+    "Name": "hier - Company",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "hier - Company"
+    }
+}

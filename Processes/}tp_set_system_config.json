@@ -1,0 +1,53 @@
+{
+    "Name": "}tp_set_system_config",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2009, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\ncControlPrefix = '';\r\nIf (pControl @= 'Y');\r\ncControlPrefix = '}';\r\nEndIf;\r\n\r\nvDimension =cControlPrefix | 'tp_system_config';\r\nvAttrConfigValue='ConfigValue';\r\n\r\nIF ( DimensionExists ( vDimension ) = 0 );\r\n  \tDimensionCreate(vDimension);\r\nENDIF;\r\n\r\nAttrInsert(vDimension, '', vAttrConfigValue, 'S');\r\n\t\r\nDimensionDeleteAllElements(vDimension);\r\nDimensionElementInsert(vDimension, '', 'IntegratedSecurityMode', 'S');\r\nDimensionElementInsert(vDimension, '', 'AdminHost', 'S');\r\nDimensionElementInsert(vDimension, '', 'ServerCAMURI', 'S');\r\nDimensionElementInsert(vDimension, '', 'ClientCAMURI', 'S');\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2009, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\nAttrPutS(pIntegratedSecurityMode, vDimension, 'IntegratedSecurityMode', vAttrConfigValue);\r\nAttrPutS(pAdminHost, vDimension, 'AdminHost', vAttrConfigValue);\r\nAttrPutS(pServerCAMURI, vDimension, 'ServerCAMURI', vAttrConfigValue);\r\nAttrPutS(pClientCAMURI, vDimension, 'ClientCAMURI', vAttrConfigValue);\r\n",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pControl",
+            "Prompt": "",
+            "Value": "N",
+            "Type": "String"
+        },
+        {
+            "Name": "pIntegratedSecurityMode",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAdminHost",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pServerCAMURI",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pClientCAMURI",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_set_system_config"
+    }
+}

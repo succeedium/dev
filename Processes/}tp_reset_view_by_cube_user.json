@@ -1,0 +1,41 @@
+{
+    "Name": "}tp_reset_view_by_cube_user",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "\r\n#################################################################\r\n## IBM Confidential\r\n##\r\n## OCO Source Materials\r\n##\r\n## BI and PM: pmpsvc\r\n##\r\n## (C) Copyright IBM Corp. 2008, 2009, 2010\r\n##\r\n## The source code for this program is not published or otherwise\r\n## divested of its trade secrets, irrespective of what has been\r\n## deposited with the U.S. Copyright Office.\r\n#################################################################\r\n\r\n#delete private views (.vue files)\r\nvPath = pUser | '\\' | pCube | '}vues\\';\r\nvFilePattern =  '*_' | pAppId |  '*.vue';\r\nvFile = wildcardfilesearch( vPath | vFilePattern , '');\r\nAsciiDelete(vPath | vFile);\r\nvPropertyFile = pCube | '.' | SUBST(vFile, 1, Long(vFile)-4) | '.' | pUser | '.blb';\r\nAsciiDelete(vPropertyFile);\r\nvFileCount = 0;\r\nWhile (vFile @<> '' );\r\n\tvFileCount = vFileCount + 1;\r\n\tvFile = wildcardfilesearch( vPath | vFilePattern , '');\r\n\tAsciiDelete(vPath | vFile);\r\n\tAsciiDelete(vPath | vFile);\r\n\tvPropertyFile = pCube | '.' | SUBST(vFile, 1, Long(vFile)-4) | '.' | pUser | '.blb';\r\n\tAsciiDelete(vPropertyFile);\r\nEND;\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pExecutionId",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pAppId",
+            "Prompt": "",
+            "Value": "MyApp",
+            "Type": "String"
+        },
+        {
+            "Name": "pCube",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        },
+        {
+            "Name": "pUser",
+            "Prompt": "",
+            "Value": "None",
+            "Type": "String"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "}tp_reset_view_by_cube_user"
+    }
+}

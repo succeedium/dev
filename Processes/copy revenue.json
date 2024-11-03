@@ -1,0 +1,23 @@
+{
+    "Name": "copy revenue",
+    "HasSecurityAccess": false,
+    "PrologProcedure": "tgrCube = 'Revenue';\r\n\r\n# Skip Group D Products\r\n\r\nval = CellGetN('Allocation Calculation', 'Massachusetts', '2022', 'Jan', 'Amount' );\r\nCellPutN(val,  IF(1>0,'Cube1','Cube2'), '2022', 'Feb', 'Value');\r\n\r\n",
+    "MetadataProcedure": "",
+    "DataProcedure": "",
+    "EpilogProcedure": "",
+    "DataSource": {
+        "Type": "None"
+    },
+    "Parameters": [
+        {
+            "Name": "pCubeName",
+            "Prompt": "",
+            "Value": 0,
+            "Type": "Numeric"
+        }
+    ],
+    "Variables": [],
+    "Attributes": {
+        "Caption": "copy revenue"
+    }
+}
