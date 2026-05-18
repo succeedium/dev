@@ -1,4 +1,0 @@
-{
-    "Name": "Job Type Assumption",
-    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\nUNDEFVALS;\n#EndRegion\n\nFEEDERS;"
-}

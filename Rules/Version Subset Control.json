@@ -1,4 +1,0 @@
-{
-    "Name": "Version Subset Control",
-    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\nUNDEFVALS;\n#EndRegion"
-}

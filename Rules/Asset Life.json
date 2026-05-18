@@ -1,4 +1,0 @@
-{
-    "Name": "Asset Life",
-    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\nUNDEFVALS;\n#EndRegion\n\nFEEDERS;"
-}

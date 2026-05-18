@@ -1,4 +1,0 @@
-{
-    "Name": "Workflow Reporting",
-    "Rules": "#Region System\nFEEDSTRINGS;\nSKIPCHECK;\n#EndRegion"
-}
