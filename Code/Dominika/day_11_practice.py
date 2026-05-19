@@ -6,6 +6,7 @@ Print:
 the whole list
 the list length using len()
 '''
+hi
 print("task 1")
 emails = []
 emails.append("admin@cbc.ca")
