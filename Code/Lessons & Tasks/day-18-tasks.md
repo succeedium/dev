@@ -1,8 +1,8 @@
-# Day 18 Tasks — Simple text files
+# Day 18 Tasks — Simple Text Files and Growing Datasets
 
 ## Submission instructions
 
-Create a Python file named:
+Create a file called:
 
 ```text
 day-18.py
@@ -13,92 +13,159 @@ Complete the tasks below in the same file.
 Use comments to separate the tasks:
 
 ```python
-# Task 1 — Write two emails
+# Task 1 — Create emails.txt
 ```
 
-For this day, your code will create and read simple `.txt` files.
+Today you will also create and use text files such as:
+
+```text
+emails.txt
+notes.txt
+email_dataset.txt
+```
 
 ---
 
-## Task 1 — Write two emails to a file
+## Task 1 — Create `emails.txt`
 
-Create a file called `emails.txt`.
+Use Python to create a file called `emails.txt`.
 
-Write these two emails into the file, one email per line:
+Write three emails into the file, each on its own line.
+
+Example emails:
 
 ```text
 alice@smallco.com
 bob@smallco.com
+tom@trialdomain.com
 ```
 
-Then run the program and open the file to check its content.
+Then print:
+
+```text
+emails.txt created
+```
 
 ---
 
 ## Task 2 — Read the whole file
 
-Read `emails.txt` using `file.read()`.
+Open `emails.txt` in read mode.
 
-Print the full file content.
+Use `file.read()` to read the full contents.
+
+Print the result.
 
 ---
 
-## Task 3 — Read lines and print clean emails
+## Task 3 — Read lines and clean them
 
-Read `emails.txt` using `file.readlines()`.
+Open `emails.txt` again.
+
+Use `file.readlines()`.
 
 Loop through the lines.
 
 For each line:
 
-1. clean it with `.strip()`
-2. print the cleaned email
+1. use `.strip()`
+2. store the cleaned value in a variable called `email`
+3. print the email
 
 ---
 
-## Task 4 — Append a new email
+## Task 4 — Append one hardcoded email
 
-Append this email to the end of `emails.txt`:
+Append this email to `emails.txt`:
 
 ```text
-tom@trialdomain.com
+support@cbc.ca
 ```
 
-Use append mode, not write mode.
+Then read the file and print all saved emails.
 
-Then read the file again and print the full content.
+Make sure the new email appears on its own line.
 
 ---
 
-## Task 5 — Write a list of emails to a file
+## Task 5 — Add one email from input
 
-Create this list in Python:
+Ask the user to enter an email address.
+
+Append the entered email to `emails.txt`.
+
+Then print:
+
+```text
+Email saved.
+```
+
+---
+
+## Task 6 — Add a cleaned email from input
+
+Ask the user to enter another email address.
+
+Clean it using:
 
 ```python
-emails = [
-    "alice@smallco.com",
-    "bob@smallco.com",
-    "tom@trialdomain.com",
-    "support@cbc.ca",
-    "demo@newlead.com"
-]
+.strip().lower()
 ```
 
-Write all emails into a file called `email_dataset.txt`, one email per line.
+Append the cleaned email to `emails.txt`.
+
+Then read the file and print all saved emails.
 
 ---
 
-## Task 6 — Read the email dataset
+## Task 7 — Count saved emails
 
-Read `email_dataset.txt`.
+Read `emails.txt` using `readlines()`.
 
-Loop through the file lines and print each cleaned email.
+Count how many non-empty emails are saved in the file.
+
+Print a message like:
+
+```text
+Total saved emails: 6
+```
+
+The number may be different depending on how many times you ran your program.
 
 ---
 
-## Task 7 — Print only SmallCo emails
+## Task 8 — Create a notes file
+
+Create a file called `notes.txt`.
+
+Write two short lines about what you learned today.
+
+Then read the file back and print it.
+
+---
+
+## Task 9 — Create a larger email dataset
+
+Create a file called `email_dataset.txt`.
+
+Write at least six emails into it, each on its own line.
+
+Include at least:
+
+- two `smallco.com` emails
+- one `cbc.ca` email
+- one `trialdomain.com` email
+- one `newlead.com` email
+
+Then read the file and print all emails.
+
+---
+
+## Task 10 — Filter the dataset
 
 Read `email_dataset.txt`.
+
+Loop through each line.
 
 Print only emails that contain:
 
@@ -108,52 +175,31 @@ smallco.com
 
 ---
 
-## Task 8 — Count all emails in the file
+## Task 11 — Mini database growth demo
 
-Read `email_dataset.txt`.
+Write a small program section that does this:
 
-Use a counter to count how many cleaned email lines are in the file.
+1. Ask the user for a TeamOne user email.
+2. Clean the email with `.strip().lower()`.
+3. Append it to `email_dataset.txt`.
+4. Read `email_dataset.txt`.
+5. Print all saved emails.
+6. Print the total number of non-empty saved emails.
 
-Print a message like:
+This task simulates a very small growing database.
+
+---
+
+## Task 12 — Reflection comment
+
+At the bottom of your file, add a Python comment answering this question:
 
 ```text
-Total emails: 5
+Why is appending to a file useful for a program that collects activity data?
 ```
 
----
+Example:
 
-## Task 9 — Save user input
-
-Ask the user to enter an email using `input()`.
-
-Append that email to a file called `submitted_emails.txt`.
-
-Remember to add a new line after the email.
-
----
-
-## Task 10 — Final mini task: simple file email report
-
-Create or reuse `email_dataset.txt`.
-
-Read the emails from the file.
-
-Print:
-
-1. all cleaned emails
-2. only emails from `smallco.com`
-3. total number of emails
-
-Example output style:
-
-```text
-All emails:
-alice@smallco.com
-bob@smallco.com
-
-SmallCo emails:
-alice@smallco.com
-bob@smallco.com
-
-Total emails: 5
+```python
+# Appending is useful because...
 ```

@@ -1,71 +1,47 @@
-# Day 18 — Simple text files: writing, reading, and appending
+# Day 18 — Simple Text Files: Writing, Reading, Appending, and Growing a Dataset
 
 ## Main goal
 
-Today you will learn how Python can save information into a file and read it back later.
+Learn how to save data into a text file, read it back, and append new values so the file can grow over time like a very simple dataset.
 
-Until now, most of our data lived inside Python variables like this:
-
-```python
-emails = ["alice@smallco.com", "bob@smallco.com"]
-```
-
-That works, but when the program stops, the data disappears.
-
-Files let us store data outside the program.
-
-For this project, we will start with a simple file called:
+By the end of this lesson, the student should understand this pattern:
 
 ```text
-emails.txt
+User enters data → Python appends it to a file → the file grows → Python can read the saved data later
 ```
 
-It will store one email per line.
-
-Example file content:
-
-```text
-alice@smallco.com
-bob@smallco.com
-tom@trialdomain.com
-```
-
-This is the first step toward using files as small datasets.
+This is the first step toward using files like a very simple database.
 
 ---
 
 ## 1. Why files matter
 
-A Python variable is temporary:
+So far, most data has lived inside Python variables:
 
 ```python
-email = "alice@smallco.com"
+emails = ["alice@smallco.com", "bob@smallco.com"]
 ```
 
-When the program ends, that variable is gone.
+That is useful for practice, but the data disappears when the program ends.
 
-A file is saved on disk:
+A file lets us save data outside the program.
+
+Example file: `emails.txt`
 
 ```text
-emails.txt
+alice@smallco.com
+bob@smallco.com
 ```
 
-If the program ends, the file can still be opened later.
-
-In the TeamOne Client Activity Hub project, files can help us store:
-
-- activity emails
-- usage dates
-- known client domains
-- simple reports
-
-For now, we will start with plain text files.
+Each line stores one email.
 
 ---
 
-## 2. Writing to a file with `"w"`
+## 2. Write to a file with `"w"`
 
-The letter `"w"` means **write mode**.
+The letter `"w"` means **write**.
+
+Important: `"w"` replaces the old file contents.
 
 ```python
 with open("emails.txt", "w") as file:
@@ -73,45 +49,24 @@ with open("emails.txt", "w") as file:
     file.write("bob@smallco.com\n")
 ```
 
-This creates or replaces the file `emails.txt`.
-
-Important: `"w"` replaces the existing file content.
-
-If the file already had old emails, they will be removed and replaced with the new content.
-
----
-
-## 3. What does `\n` mean?
-
-`\n` means **new line**.
-
-This:
-
-```python
-file.write("alice@smallco.com\n")
-file.write("bob@smallco.com\n")
-```
-
-creates this file:
+After this code runs, `emails.txt` contains:
 
 ```text
 alice@smallco.com
 bob@smallco.com
 ```
 
-Without `\n`, the emails would be written on the same line:
+### What does `\n` mean?
 
-```text
-alice@smallco.combob@smallco.com
-```
+`\n` means **new line**.
 
-So when writing one item per line, remember to add `\n`.
+Without `\n`, the emails would be written on the same line.
 
 ---
 
-## 4. Reading the whole file with `read()`
+## 3. Read the whole file with `read()`
 
-The letter `"r"` means **read mode**.
+The letter `"r"` means **read**.
 
 ```python
 with open("emails.txt", "r") as file:
@@ -122,13 +77,11 @@ print(text)
 
 `file.read()` gives us the whole file as one string.
 
-That is useful when we simply want to see all the file contents.
-
 ---
 
-## 5. Reading lines with `readlines()`
+## 4. Read the file as lines with `readlines()`
 
-Often, we want to process one line at a time.
+For datasets, it is often better to read one line at a time.
 
 ```python
 with open("emails.txt", "r") as file:
@@ -137,21 +90,67 @@ with open("emails.txt", "r") as file:
 print(lines)
 ```
 
-The result may look like this:
+This may print something like:
 
 ```python
-["alice@smallco.com\n", "bob@smallco.com\n"]
+['alice@smallco.com\n', 'bob@smallco.com\n']
 ```
 
-Each line is a string.
+Each line still has the new-line character `\n` at the end.
 
-Notice that the `\n` is still there at the end of each line.
+We can clean it with `.strip()`:
+
+```python
+for line in lines:
+    email = line.strip()
+    print(email)
+```
 
 ---
 
-## 6. Cleaning each line with `.strip()`
+## 5. Append to a file with `"a"`
 
-When we read lines from a file, we usually clean each line with `.strip()`.
+The letter `"a"` means **append**.
+
+Append means: add to the end of the file without deleting what is already there.
+
+```python
+with open("emails.txt", "a") as file:
+    file.write("tom@trialdomain.com\n")
+```
+
+If the file already had two emails, it now has three.
+
+This is the key idea for simulating database growth.
+
+---
+
+## 6. Populate a file from user input
+
+Now the program can ask the user for data and save it.
+
+```python
+email = input("Enter a TeamOne user email: ")
+
+with open("emails.txt", "a") as file:
+    file.write(email + "\n")
+
+print("Email saved.")
+```
+
+This is a simple version of:
+
+```text
+User input → saved record → growing dataset
+```
+
+Every time the program runs, it adds another line to `emails.txt`.
+
+---
+
+## 7. Read the growing dataset back
+
+After adding emails, we can read all saved emails:
 
 ```python
 with open("emails.txt", "r") as file:
@@ -162,95 +161,78 @@ for line in lines:
     print(email)
 ```
 
-`line.strip()` removes extra spaces and the newline character `\n`.
-
-This is very similar to cleaning user input or messy email text.
+This is the basic pattern for working with file-based datasets.
 
 ---
 
-## 7. Appending to a file with `"a"`
+## 8. Add one email, then show all saved emails
 
-The letter `"a"` means **append mode**.
-
-Append means add to the end of the file without deleting what is already there.
+This example combines input, append, read, and loop.
 
 ```python
-with open("emails.txt", "a") as file:
-    file.write("tom@trialdomain.com\n")
-```
-
-Use `"a"` when you want to save a new item and keep the old items.
-
-This is useful for saving new input.
-
-```python
-new_email = input("Enter an email: ")
+email = input("Enter a TeamOne user email: ")
 
 with open("emails.txt", "a") as file:
-    file.write(new_email + "\n")
+    file.write(email + "\n")
+
+print("Saved emails:")
+
+with open("emails.txt", "r") as file:
+    lines = file.readlines()
+
+for line in lines:
+    saved_email = line.strip()
+    print(saved_email)
 ```
+
+This is the most important example of the day.
 
 ---
 
-## 8. Writing a list to a file
+## 9. Save a cleaned email
 
-We can also write values from a list into a file.
+Before saving data, we can clean it.
 
 ```python
-emails = [
-    "alice@smallco.com",
-    "bob@smallco.com",
-    "tom@trialdomain.com"
-]
+email = input("Enter email: ")
+clean_email = email.strip().lower()
 
-with open("emails.txt", "w") as file:
-    for email in emails:
-        file.write(email + "\n")
+with open("emails.txt", "a") as file:
+    file.write(clean_email + "\n")
+
+print("Clean email saved.")
 ```
 
-This combines:
-
-- lists
-- loops
-- files
-- strings
+This connects file work to previous lessons about `.strip()` and `.lower()`.
 
 ---
 
-## 9. Reading a file and filtering emails
+## 10. Count saved emails
 
-Once we read emails from a file, we can use the same logic we already know.
+Once the file has multiple lines, we can count them.
 
 ```python
 with open("emails.txt", "r") as file:
     lines = file.readlines()
 
-for line in lines:
-    email = line.strip().lower()
+count = 0
 
-    if "smallco.com" in email:
-        print(email)
+for line in lines:
+    email = line.strip()
+
+    if email != "":
+        count = count + 1
+
+print(f"Total saved emails: {count}")
 ```
 
-The file is now acting like a simple dataset.
-
----
-
-## 10. Common file modes
-
-| Mode | Meaning | What it does |
-|---|---|---|
-| `"w"` | write | creates/replaces a file |
-| `"r"` | read | reads an existing file |
-| `"a"` | append | adds to the end of a file |
-
-For now, these three are enough.
+This prepares students for future reporting tasks.
 
 ---
 
 # Drills
 
-## Drill 1 — Predict file content
+## Drill 1 — Predict the file contents
 
 What will be inside `emails.txt` after this code runs?
 
@@ -262,93 +244,52 @@ with open("emails.txt", "w") as file:
 
 ---
 
-## Drill 2 — Explain `\n`
+## Drill 2 — Explain `w`, `r`, and `a`
 
-What is the difference between these two versions?
+Explain what each mode does:
 
-```python
-file.write("alice@smallco.com")
-file.write("bob@smallco.com")
+```text
+"w"
+"r"
+"a"
 ```
 
-and:
-
-```python
-file.write("alice@smallco.com\n")
-file.write("bob@smallco.com\n")
-```
+Which one can erase existing file contents?
 
 ---
 
-## Drill 3 — `w` versus `a`
+## Drill 3 — Predict append behavior
 
-Explain the difference between these two modes:
-
-```python
-open("emails.txt", "w")
-```
-
-```python
-open("emails.txt", "a")
-```
-
-Which one replaces the file?
-
-Which one adds to the end?
-
----
-
-## Drill 4 — Read the full file
-
-Predict what gets printed:
-
-```python
-with open("emails.txt", "r") as file:
-    text = file.read()
-
-print(text)
-```
-
----
-
-## Drill 5 — Read lines
-
-Assume `emails.txt` contains:
+Assume `emails.txt` already contains:
 
 ```text
 alice@smallco.com
-bob@smallco.com
 ```
 
-What type of value is `lines`?
+What will the file contain after this code?
 
 ```python
-with open("emails.txt", "r") as file:
-    lines = file.readlines()
-
-print(lines)
+with open("emails.txt", "a") as file:
+    file.write("bob@smallco.com\n")
 ```
 
 ---
 
-## Drill 6 — Clean one line
+## Drill 4 — Fix the missing new line
 
-What does this print?
+This code writes two emails on one line. Fix it.
 
 ```python
-line = "alice@smallco.com\n"
-email = line.strip()
-
-print(email)
+with open("emails.txt", "w") as file:
+    file.write("alice@smallco.com")
+    file.write("bob@smallco.com")
 ```
-
-Why is `.strip()` useful when reading files?
 
 ---
 
-## Drill 7 — Loop through file lines
+## Drill 5 — Read and clean lines
 
-Explain each step:
+What does `.strip()` do here?
 
 ```python
 with open("emails.txt", "r") as file:
@@ -359,86 +300,97 @@ for line in lines:
     print(email)
 ```
 
-What is `line`?
-
-What is `email`?
-
 ---
 
-## Drill 8 — Fix the mistake
+## Drill 6 — Input plus append
 
-This code has a problem:
+Explain this code in plain English:
 
 ```python
-with open("emails.txt", "w") as file
-    file.write("alice@smallco.com\n")
-```
+email = input("Enter email: ")
 
-What is missing?
+with open("emails.txt", "a") as file:
+    file.write(email + "\n")
+```
 
 ---
 
-## Drill 9 — Fix another mistake
+## Drill 7 — Clean before saving
 
-This code has a problem:
+Fill in the missing line.
 
 ```python
-with open("emails.txt", "r") as file:
-    text = file.read
+email = input("Enter email: ")
+clean_email = ______________________
 
-print(text)
+with open("emails.txt", "a") as file:
+    file.write(clean_email + "\n")
 ```
 
-What is missing after `read`?
+Goal: remove extra spaces and make the email lowercase.
 
 ---
 
-## Drill 10 — Filter file data
+## Drill 8 — Fix file reading mistake
 
-Assume the file contains:
-
-```text
-alice@smallco.com
-bob@smallco.com
-tom@trialdomain.com
-```
-
-What will this print?
+Fix the mistake.
 
 ```python
 with open("emails.txt", "r") as file:
-    lines = file.readlines()
+    lines = file.readlines
 
 for line in lines:
-    email = line.strip().lower()
+    print(line.strip())
+```
 
-    if "smallco.com" in email:
-        print(email)
+---
+
+## Drill 9 — Count non-empty lines
+
+What does this code count?
+
+```python
+count = 0
+
+for line in lines:
+    email = line.strip()
+
+    if email != "":
+        count = count + 1
+```
+
+---
+
+## Drill 10 — Explain the dataset idea
+
+Explain this in your own words:
+
+```text
+A text file can act like a tiny dataset because each line can store one record.
 ```
 
 ---
 
 # Review and explain-back
 
-Answer these in your own words:
+The student should be able to answer:
 
-1. Why are files useful?
-2. What does `open("emails.txt", "w")` do?
-3. What does `open("emails.txt", "r")` do?
-4. What does `open("emails.txt", "a")` do?
-5. What does `\n` mean?
+1. What does `open("emails.txt", "w")` do?
+2. Why can `"w"` be dangerous?
+3. What does `open("emails.txt", "a")` do?
+4. Why do we add `"\n"` when writing each email?
+5. What is the difference between `read()` and `readlines()`?
 6. Why do we often use `.strip()` when reading lines from a file?
-7. What is the difference between `read()` and `readlines()`?
-8. How can a text file act like a simple dataset?
+7. How can `input()` help us grow a file-based dataset?
+8. Why is a text file more useful than hardcoded variables for storing growing data?
 
 ---
 
 # Coaching hints
 
-- Keep the first examples very small. Two or three lines in a file is enough.
-- Emphasize that `"w"` replaces a file. This is one of the most important beginner file warnings.
-- If the student forgets `\n`, show the actual file content so they can see why everything appears on one line.
-- Do not introduce JSON or CSV yet. Today is only simple text files.
-- Treat `with open(...) as file:` as a pattern. A deep explanation is not needed yet.
-- If file location becomes confusing, remind the student that Python looks in the same folder where the program is running unless told otherwise.
-- Encourage students to open `emails.txt` after running the code so they can see what Python created.
+- Keep the first mental model very simple: a text file is a place where Python can save text.
+- Emphasize that `"w"` replaces the file, while `"a"` adds to the file.
+- When students forget `\n`, show the file contents so they can see why lines joined together.
+- Do not introduce CSV or JSON yet. This day is only about simple text files.
+- The most important pattern is: ask with `input()`, clean the value, append it, read it back.
+- If file paths cause confusion, keep the `.py` file and `.txt` file in the same folder for now.
