@@ -1,5 +1,7 @@
-Loop through usage_records and print a sentence for each record.
+print("task 9")
 
-Expected style:
-
-alice@smallco.com used TeamOne on 2026-04-01
+keyword = "co"
+for clients in clients:
+    if keyword == clients["name"]:
+        print(client["name"])
+        
