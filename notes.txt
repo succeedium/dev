@@ -1,0 +1,2 @@
+Today I learned about simple text files, I learned that to make a file you write with open("notes.txt", "w")
+I also learned that \n means new line. 
