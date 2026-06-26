@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Jay@smallco.com
 layla@smallco.com
 robin@cbc.ca
@@ -5,3 +6,13 @@ parker@trialdomain.com
 lola@newlead.com
 marvin@newlead.com
 monika
+=======
+dom@gmail.com
+vlad@gmail.com
+sas@smallco.com
+rod@smallco.com
+fow@cbc.ca
+doordash@trialdomain.com
+hiia@newlead.com
+hhhh
+>>>>>>> 6ff3a074275e3806476f7a981e925a7ebf94444a

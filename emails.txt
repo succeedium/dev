@@ -2,5 +2,10 @@ alice@smallco.com
 bob@smallco.com
 tom@trialdomain.com
 support@cbc.ca
+<<<<<<< HEAD
 d
 d
+=======
+kjh
+hhhh
+>>>>>>> 6ff3a074275e3806476f7a981e925a7ebf94444a

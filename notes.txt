@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 I learned about creating files and I
 learned about reading files. 
+=======
+Today I learned about simple text files, I learned that to make a file you write with open("notes.txt", "w")
+I also learned that \n means new line. 
+>>>>>>> 6ff3a074275e3806476f7a981e925a7ebf94444a
