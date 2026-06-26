@@ -2,20 +2,23 @@ from pathlib import Path
 
 script_dir = Path(__file__).resolve().parent
 
-with open(script_dir / "emails.txt", "w") as file:
+file_path = "Code/Dominika/emails.txt"
+
+with open("Code/Lessons & Tasks/emails.txt", "w") as file:
     file.write("email1@trialdomain.com\n")
-    file.write("email2@trialdomain.com\n")
     file.write("email3@trialdomain.com\n")
 
+with open("Code/Lessons & Tasks/emails.txt", "r") as file:
+    print( len(file.readlines()) )
 
-with open(script_dir / "emails.txt", "a") as file:
-    file.write("email4@trialdomain.com\n")
+'''
+# Dominika
+with open(file_path, "w") as file:
+    file.write("email1@trialdomain.com\n")
+    file.write("email3@trialdomain.com\n")
 
-with open(script_dir / "emails.txt", "w") as file:
-    file.write("email5@trialdomain.com\n")
-
-
-with open(script_dir / "emails.txt", "r") as file:
-    text = file.read()
-    
-print(text)
+# Monika
+with open("Code/Monika/emails.txt", "w") as file:
+    file.write("email1@trialdomain.com\n")
+    file.write("email3@trialdomain.com\n")
+'''
