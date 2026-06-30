@@ -1,19 +1,50 @@
-email = input("Enter email TeamOne User: ")
-clean_email = email.strip().lower()
-with open("email_dataset.txt", "a") as file:
-     file.write(clean_email + "\n")
-     
-print("all saved emails")
 
-with open("email_dataset.txt" ,"r") as file:
-     dataset_content = file.read()
-print(dataset_content)
+print("task 10")
+#Task 10 — Mini dataset report
 
-with open("dataset_content", "r") as file:
-     lines = file.readlines()
+'''Create a small report from email_dataset.txt.
 
-count = 0
-for line in lines:
-     if line.strip() != "":
-          count = count + 1
-print(f"total count of non-empty emails:", {count})
+The report should print:
+
+total non-empty saved records
+number of valid-looking emails
+number of invalid-looking emails
+number of smallco.com emails
+Example output:
+
+Dataset report
+Total records: 6
+Valid-looking emails: 5
+Invalid-looking emails: 1
+SmallCo emails: 2'''
+to_records_count = 0
+valid_count = 0
+invalid_count = 0
+smallco_count = 0
+keyword = "SmallCo"
+with open("email_dataset.txt", "r") as file:
+    lines = file.readlines()
+
+    for line in lines:
+        clean_email = line.strip()
+
+        if clean_email == "":
+            continue
+
+        total_records = + 1
+
+        if "@" in clean_email:
+            valid_count = + 1
+
+        if clean_email != "@":
+            invalid_count = + 1
+
+        if keyword in clean_email:
+            smallco_count = + 1
+
+print("Dataset report")
+
+print(f"Total records:, {total_records}")
+print(f"Valid-looking emails:, {valid_count}")
+print(f"Invalid-looking emails:, {invalid_count}")
+print(f"SmallCo emails:, {smallco_count}")
