@@ -1,7 +1,8 @@
 # Task 1 — Create the dataset file
-with open("m.email_dataset.txt" , "w") as file:
+with open("code/Monika/m.email_dataset.txt" , "w") as file:
     file.write("alice@smallco.com\n")
     file.write("bob@smallco.com\n")
+    file.write("\n")
     file.write("tom@trialdomain.com\n")
     file.write("support@cbc.ca\n")
 
@@ -10,7 +11,7 @@ print("files have been created.\n")
 
 #Task 2 — Read and print all saved emails
 
-with open("m.email_dataset.txt", "r") as file:
+with open("code/Monika/m.email_dataset.txt" , "r") as file:
     lines = file.readlines()
     for line in lines:
         print(line.strip())
@@ -19,10 +20,11 @@ with open("m.email_dataset.txt", "r") as file:
 
 count = 0
 
-with open("m.email_dataset.txt","r") as file:
+with open("code/Monika/m.email_dataset.txt" ,"r") as file:
     lines = file.readlines()
+    print(lines)
     for line in lines:
-        if " " not in line:
+        if line.strip() != "":
             count = count + 1
 
     print(f"There are: {count} saved emails.")
@@ -35,17 +37,17 @@ with open("m.email_dataset.txt", "a") as file:
 
 #Task 5 — Read the file after appending
 
-with open("m.email_dataset.txt", "r") as file:
+with open("code/Monika/m.email_dataset.txt" , "r") as file:
      lines = file.readlines()
      for line in lines:
          print(line.strip().lower())
 
 # Task 6 — Skip blank lines
 
-with open("m.email_dataset.txt" , "a") as file:
+with open("code/Monika/m.email_dataset.txt" , "a") as file:
     file.write("\n")
 
-with open("m.email_dataset.txt", "r") as file:
+with open("code/Monika/m.email_dataset.txt" , "r") as file:
     lines = file.readlines()
     for line in lines:
       if line.strip() != "":
@@ -53,7 +55,7 @@ with open("m.email_dataset.txt", "r") as file:
 
 #Task 7 — Print only SmallCo emails
 
-with open("m.email_dataset.txt", "r") as file:
+with open("code/Monika/m.email_dataset.txt" , "r") as file:
     lines = file.readlines()
     for line in lines:
         if "smallco" in line.strip().lower():
@@ -61,7 +63,7 @@ with open("m.email_dataset.txt", "r") as file:
     
 #Task 8 — Print valid-looking and invalid-looking emails
 
-with open("m.email_dataset.txt","r") as file:
+with open("code/Monika/m.email_dataset.txt" ,"r") as file:
   lines = file.readlines()
   for line in lines:
       clean = line.strip()
@@ -75,10 +77,11 @@ with open("m.email_dataset.txt","r") as file:
 
 #Task 9 — Extract domains from saved emails
 
-with open("m.email_dataset.txt","r") as file:
+with open("code/Monika/m.email_dataset.txt" ,"r") as file:
     lines = file.readlines()
     for line in lines:
         if "@" in line:
+            line = line.strip()
             at_pos = line.find("@")
             domain = line[at_pos + 1:]
             print(f"Domain is {domain}")
@@ -90,7 +93,7 @@ invalid_count = 0
 smallco_count = 0
 total_records = 0 
 
-with open("m.email_dataset.txt","r") as file:
+with open("code/Monika/m.email_dataset.txt" ,"r") as file:
     for line in file:
         email = line.strip()
 
