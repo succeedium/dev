@@ -1,7 +1,7 @@
 print("task 1")
 # Task 1 — Create the dataset file
 
-with open("email_dataset.txt", "w") as file:
+with open("Code/Dominika/email_dataset.txt", "w") as file:
     file.write("alice@smallco.com\n")
     file.write("bob@smallco.com\n")
     file.write("tom@trialdomain.com\n")
