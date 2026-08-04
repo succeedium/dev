@@ -1,7 +1,6 @@
-alice@smallco.com
-bob@smallco.com
-tom@trialdomain.com
-support@cbc.ca
-demo@newlead.com
-dddddddd
-
+alice@smallco.com,2026-04-01
+bob@smallco.com,2026-04-02
+tom@trialdomain.com,2026-04-03
+support@cbc.ca,2026-04-04
+demo@newlead.com,2026-04-05
+ggggggggggg.@, oi8765redfc /n
