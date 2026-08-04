@@ -1,0 +1,6 @@
+c:\python\python.exe c:/users/monic/documents/git/dev/code/monika/day-19.py
+c:\python\python.exe c:/users/monic/documents/git/dev/code/monika/day-19.py
+c:\python\python.exe c:/users/monic/documents/git/dev/code/monika/day-19.py
+test@test.com
+c:\python\python.exe c:/users/monic/documents/git/dev/code/monika/day-19.py
+test

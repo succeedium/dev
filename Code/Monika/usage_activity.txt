@@ -1,0 +1,5 @@
+alice@smallco.com,2026-04-01
+bob@smallco.com,2026-04-01
+tom@trialdomain.com,2026-04-02
+support@cbc.ca,2026-04-02
+demo@newlead.com,2026-04-03

@@ -1,0 +1,4 @@
+alice@smallco.com,2026-04-01
+bad-line-without-comma
+bob@smallco.com,2026-04-01
+another bad line
