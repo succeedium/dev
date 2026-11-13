@@ -1,1 +1,13 @@
-Vlad oct 22
+When you open a folder within a Git repository, the Git sidebar shows its changes, commit history, and branches.
+- Review changes: Check the Changed and Untracked sections for modified or newly created files.
+- Commit: Stage the files you want to include, enter a commit message, and select Commit.
+- Pull: Use the pull action in the Git toolbar to retrieve and integrate remote changes.
+- Push: Use the push action to publish your local commits to the remote repository.
+- Branches and history: Use Branches and Tags and History to work with branches and review previous commits.
+A commit is saved locally; it is not uploaded to the remote repository until you push it.
+
+You can add a .gitignore file to a repository to exclude temporary files, notebook checkpoints (such as .ipynb_checkpoints/), and other files that should not be tracked by Git.
+
+The Python workspace is shared, so users working in the same repository should coordinate changes to avoid conflicts.
+
+Nov 13, 2026
